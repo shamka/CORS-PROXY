@@ -29,10 +29,11 @@ function corsProxy(
     "http://127.0.0.1:61988/",
     init);
 }
-corsProxy(
+await corsProxy(
     "GET",
     "https://v4.sh16.ru/")
-.then(console.log)
+ .then(r=>r.text())
+// return your IPv4 address
 ```
 `method` - request method (GET, POST, OPTIONS, etc)<br>
 `url` - link to resourse (https://example.com/path)<br>
