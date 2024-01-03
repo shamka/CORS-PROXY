@@ -1,9 +1,13 @@
 # CORS_PROXY
-Enables the browser to make requests to sites that do not support CORS headers
+Helps the browser to make a CORS request to a resource that does not expose permissive headers
+
+# How to compile
+Start compile.bat (Windows), or compile.sh (Unix/Linux)
+A JDK is required. It is also necessary that the PATH contains a path to javac and jar.
 
 # How to use
 1. Start with `java -jar cors_proxy.jar` or `javaw -jar cors_proxy.jar`
-2. Make http POST request from browser (fetch or XMLHttpRequest) to `http://localhost:61988/` with headers X-Cp-Method (GET, POST, PUT, OPTION, PATCH, DELETE, etc) and X-Cp-Url (http(s)://target-cors-domain/path/file).<br>
+2. Make http POST request from browser (fetch or XMLHttpRequest) to `http://localhost:61988/cors` with headers X-Cp-Method (GET, POST, PUT, OPTION, PATCH, DELETE, etc) and X-Cp-Url (http(s)://target-cors-domain/path/file).<br>
 You can also specify other headers and the request body to be forwarded to the target server. This proxy always adds headers to the server response:<br>
 `Access-Control-Allow-Origin: *`<br>
 `Access-Control-Allow-Headers: *`<br>
@@ -26,7 +30,7 @@ function corsProxy(
   body:data,
  };
  return fetch(
-    "http://127.0.0.1:61988/",
+    "http://127.0.0.1:61988/cors",
     init);
 }
 await corsProxy(
