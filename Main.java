@@ -30,25 +30,20 @@ import static java.lang.System.setProperty;
 
 public class Main extends JFrame {
     public Main (){
-        Container c = getContentPane(); // клиентская область окна
-        c.setLayout(new BorderLayout()); // выбираем компоновщик
-        // добавляем какие-нибудь дочерние элементы
-        // -------------------------------------------
-        // настройка окна
-        setTitle("CORS PROXY"); // заголовок окна
-        // желательные размеры окна
+        Container c = getContentPane();
+        c.setLayout(new BorderLayout());
+        setTitle("CORS PROXY");
         setPreferredSize(new Dimension(240, 80));
-        // завершить приложение при закрытии окна
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        pack(); // устанавливаем желательные размеры
-        setVisible(true); // отображаем окно
+        pack();
+        setVisible(true);
         main2(LOCAL_PORT);
     }
 
     private static final int LOCAL_PORT = 61988;
     public static void copyStream(InputStream input, OutputStream output) throws IOException
     {
-        byte[] buffer = new byte[1024]; // Adjust if you want
+        byte[] buffer = new byte[1024];
         int bytesRead;
         while ((bytesRead = input.read(buffer)) != -1)
             output.write(buffer, 0, bytesRead);
@@ -78,8 +73,7 @@ public class Main extends JFrame {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        server.createContext("/", exchange -> {
-            //System.out.println(exchange.getRequestMethod()+" "+exchange.getRequestURI());
+        server.createContext("/cors", exchange -> {
             if("OPTIONS".equals(exchange.getRequestMethod())){
                 Headers gds = exchange.getResponseHeaders();
                 gds.set("Access-Control-Allow-Origin", "*");
@@ -110,12 +104,9 @@ public class Main extends JFrame {
             else{
                 ((HttpURLConnection)conn).setRequestMethod(method);
             }
-
-            //conn.setRequestProperty("Connection", "close");
             for(Map.Entry<String, List<String>> pv : headers.entrySet()){
                 if(pv.getKey() == null)continue;
                 if(pv.getValue() == null)continue;
-                //if(pv.getKey().equalsIgnoreCase("connection")) continue;
                 if(pv.getKey().equalsIgnoreCase("x-cp-method")) continue;
                 if(pv.getKey().equalsIgnoreCase("host")) continue;
                 if(pv.getKey().equalsIgnoreCase("x-cp-url")) continue;
@@ -162,7 +153,6 @@ public class Main extends JFrame {
             for(Map.Entry<String, List<String>> pv : headers2.entrySet()){
                 if(pv.getKey() == null)continue;
                 if(pv.getValue() == null)continue;
-                //if(pv.getKey().equalsIgnoreCase("connection")) continue;
                 if(pv.getKey().equalsIgnoreCase("access-control-allow-origin")) continue;
                 if(pv.getKey().equalsIgnoreCase("access-control-allow-headers")) continue;
                 if(pv.getKey().equalsIgnoreCase("access-control-allow-methods")) continue;
@@ -173,7 +163,6 @@ public class Main extends JFrame {
             gds.set("Access-Control-Allow-Origin",  "*");
             gds.set("Access-Control-Allow-Headers", "*");
             gds.set("Access-Control-Allow-Methods", "*");
-            //gds.set("Connection", "close");
             gds.set("Access-Control-Max-Age", "86400");
             exchange.sendResponseHeaders(stCode, 0);
             if(sr2pr != null)copyStream(sr2pr, pr2cl);
