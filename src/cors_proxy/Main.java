@@ -109,6 +109,7 @@ public class Main extends JFrame {
                 if(pv.getValue() == null)continue;
                 if(pv.getKey().equalsIgnoreCase("x-cp-method")) continue;
                 if(pv.getKey().equalsIgnoreCase("host")) continue;
+                if(pv.getKey().equalsIgnoreCase("cookie")) continue;
                 if(pv.getKey().equalsIgnoreCase("x-cp-url")) continue;
                 for(String v : pv.getValue()) {
                     conn.addRequestProperty(pv.getKey(), v);
@@ -157,6 +158,7 @@ public class Main extends JFrame {
                 if(pv.getKey().equalsIgnoreCase("access-control-allow-headers")) continue;
                 if(pv.getKey().equalsIgnoreCase("access-control-allow-methods")) continue;
                 if(pv.getKey().equalsIgnoreCase("access-control-max-age")) continue;
+                if(pv.getKey().equalsIgnoreCase("set-cookie")) continue;
                 for(String v : pv.getValue())
                     gds.set(pv.getKey(), v);
             }
