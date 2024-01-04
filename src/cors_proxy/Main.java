@@ -29,11 +29,14 @@ import java.util.concurrent.Executors;
 import static java.lang.System.setProperty;
 
 public class Main extends JFrame {
+    private static final String VERSION = "0.0.2";
     public Main (){
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
         setTitle("CORS PROXY");
         setPreferredSize(new Dimension(240, 80));
+        JLabel ver = new JLabel("Version: "+VERSION,JLabel.CENTER);
+        getContentPane().add(ver);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         pack();
         setVisible(true);
@@ -182,6 +185,7 @@ public class Main extends JFrame {
         }
         else{
             //CONSOLE
+            System.out.println("Version: " + VERSION);
             System.out.println("Press Ctrl+C to exit..");
             main2(LOCAL_PORT);
         }
