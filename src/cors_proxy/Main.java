@@ -3,12 +3,14 @@ package cors_proxy;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpServer;
 
+import javax.imageio.ImageIO;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +22,6 @@ import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ import java.util.concurrent.Executors;
 import static java.lang.System.setProperty;
 
 public class Main extends JFrame {
-    private static final String VERSION = "0.0.2";
+    private static final String VERSION = "0.0.3";
     public Main (){
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
@@ -38,8 +39,59 @@ public class Main extends JFrame {
         JLabel ver = new JLabel("Version: "+VERSION,JLabel.CENTER);
         getContentPane().add(ver);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addWindowStateListener(e -> {
+            if((e.getNewState() == 1) && SystemTray.isSupported()) {
+                setVisible(false);
+            }
+        });
         pack();
-        setVisible(true);
+        boolean trayB = false;
+        BufferedImage iconImage;
+        try(InputStream is = this.getClass().getClassLoader().getResourceAsStream("res/mipmap/icon.png")){
+            if(is != null) {
+                iconImage = ImageIO.read(is);
+                trayB = true;
+            }
+            else throw new RuntimeException();
+        } catch (Exception ignored) {
+            iconImage = new BufferedImage(32,32,BufferedImage.TYPE_INT_RGB);
+        }
+
+        if (trayB && !SystemTray.isSupported()) {
+            setVisible(true);
+        }
+        else{
+            setVisible(false);
+            final PopupMenu popup = new PopupMenu();
+            final SystemTray tray = SystemTray.getSystemTray();
+
+            MenuItem version = new MenuItem("Version: "+VERSION);
+            version.setEnabled(false);
+            MenuItem exitItem = new MenuItem("Exit");
+            exitItem.setActionCommand("EXIT");
+            exitItem.addActionListener(e -> {
+                if("EXIT".equals(e.getActionCommand()))
+                    System.exit(0);
+            });
+            popup.add(version);
+            popup.add(exitItem);
+            final TrayIcon trayIcon = new TrayIcon(iconImage.getScaledInstance(16,-1,Image.SCALE_SMOOTH));
+            trayIcon.setPopupMenu(popup);
+            trayIcon.setActionCommand("OPEN");
+            trayIcon.addActionListener(e -> {
+                if("OPEN".equals(e.getActionCommand())) {
+                    setVisible(true);
+                    setState(Frame.NORMAL);
+                    requestFocus();
+                }
+            });
+            try {
+                tray.add(trayIcon);
+            } catch (AWTException e) {
+                setVisible(true);
+            }
+        }
+
         main2(LOCAL_PORT);
     }
 
@@ -58,9 +110,9 @@ public class Main extends JFrame {
             context = SSLContext.getInstance("TLS");
             context.init(null, new TrustManager[]{new X509TrustManager() {
                 @Override
-                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {}
                 @Override
-                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {}
                 @Override
                 public X509Certificate[] getAcceptedIssuers() {
                     return new X509Certificate[0];
@@ -70,7 +122,7 @@ public class Main extends JFrame {
 
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 
-        HttpServer server = null;
+        HttpServer server;
         try {
             server = HttpServer.create(new InetSocketAddress("localhost", port), 10);
         } catch (IOException e) {
