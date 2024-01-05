@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 import static java.lang.System.setProperty;
 
 public class Main extends JFrame {
-    private static final String VERSION = "0.0.3";
+    private static final String VERSION = "0.0.4";
     public Main (){
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
