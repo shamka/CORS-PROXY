@@ -122,11 +122,12 @@ public class Main extends JFrame {
 
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 
-        HttpServer server;
+        HttpServer server = null;
         try {
             server = HttpServer.create(new InetSocketAddress("localhost", port), 10);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println(e.getMessage());
+            System.exit(-1);
         }
         server.createContext("/cors", exchange -> {
             if("OPTIONS".equals(exchange.getRequestMethod())){
