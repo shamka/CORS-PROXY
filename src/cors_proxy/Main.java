@@ -166,6 +166,7 @@ public class Main extends JFrame {
                 if(pv.getKey().equalsIgnoreCase("x-cp-method")) continue;
                 if(pv.getKey().equalsIgnoreCase("host")) continue;
                 if(pv.getKey().equalsIgnoreCase("cookie")) continue;
+                if(pv.getKey().toLowerCase().startsWith("sec-fetch-")) continue;
                 if(pv.getKey().equalsIgnoreCase("x-cp-url")) continue;
                 for(String v : pv.getValue()) {
                     conn.addRequestProperty(pv.getKey(), v);
