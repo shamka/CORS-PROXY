@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 import static java.lang.System.setProperty;
 
 public class Main extends JFrame {
-    private static final String VERSION = "1.0.0";
+    private static final String VERSION = "1.0.1";
     public Main (){
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
@@ -135,8 +135,9 @@ public class Main extends JFrame {
                 gds.set("Access-Control-Allow-Origin", "*");
                 gds.set("Access-Control-Allow-Headers", "*");
                 gds.set("Access-Control-Allow-Methods", "*");
+                gds.set("Access-Control-Expose-Headers", "*");
                 gds.set("Access-Control-Max-Age", "86400");
-                exchange.sendResponseHeaders(200, -1);
+                exchange.sendResponseHeaders(204, -1);
                 exchange.close();
                 return;
             }
@@ -216,13 +217,16 @@ public class Main extends JFrame {
                 if(pv.getKey().equalsIgnoreCase("access-control-allow-headers")) continue;
                 if(pv.getKey().equalsIgnoreCase("access-control-allow-methods")) continue;
                 if(pv.getKey().equalsIgnoreCase("access-control-max-age")) continue;
+                if(pv.getKey().equalsIgnoreCase("access-control-expose-headers")) continue;
                 if(pv.getKey().equalsIgnoreCase("set-cookie")) continue;
+                if(pv.getKey().equalsIgnoreCase("set-cookie2")) continue;
                 for(String v : pv.getValue())
                     gds.set(pv.getKey(), v);
             }
             gds.set("Access-Control-Allow-Origin",  "*");
             gds.set("Access-Control-Allow-Headers", "*");
             gds.set("Access-Control-Allow-Methods", "*");
+            gds.set("Access-Control-Expose-Headers", "*");
             gds.set("Access-Control-Max-Age", "86400");
             exchange.sendResponseHeaders(stCode, 0);
             if(sr2pr != null)copyStream(sr2pr, pr2cl);
