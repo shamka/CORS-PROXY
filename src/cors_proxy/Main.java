@@ -15,10 +15,10 @@ import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -152,13 +152,23 @@ public class Main extends JFrame {
             InputStream cl2pr = exchange.getRequestBody();
             OutputStream pr2cl = exchange.getResponseBody();
 
-            URLConnection conn = url.openConnection();
-
-            if(conn instanceof HttpsURLConnection){
-                ((HttpsURLConnection)conn).setRequestMethod(method);
+            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+            try {
+                conn.setRequestMethod(method);
             }
-            else{
-                ((HttpURLConnection)conn).setRequestMethod(method);
+            catch (Throwable e){
+                try {
+                    Field mt = HttpURLConnection.class.getDeclaredField("method");
+                    Field del = conn.getClass().getDeclaredField("delegate");
+                    mt.setAccessible(true);
+                    del.setAccessible(true);
+                    mt.set(del.get(conn), method);
+                }
+                catch (Exception ignore) {
+                    exchange.sendResponseHeaders(405, -1);
+                    exchange.close();
+                    return;
+                }
             }
             for(Map.Entry<String, List<String>> pv : headers.entrySet()){
                 if(pv.getKey() == null)continue;
@@ -184,11 +194,7 @@ public class Main extends JFrame {
             Headers gds = exchange.getResponseHeaders();
             int stCode;
             try {
-                if (conn instanceof HttpsURLConnection) {
-                    stCode = ((HttpsURLConnection) conn).getResponseCode();
-                } else {
-                    stCode = ((HttpURLConnection) conn).getResponseCode();
-                }
+                stCode = conn.getResponseCode();
             }
             catch (Throwable e){
                 stCode = 502;
@@ -201,12 +207,7 @@ public class Main extends JFrame {
                 sr2pr = conn.getInputStream();
             }
             catch (IOException e){
-                if(conn instanceof HttpsURLConnection){
-                    sr2pr = ((HttpsURLConnection)conn).getErrorStream();
-                }
-                else{
-                    sr2pr = ((HttpURLConnection)conn).getErrorStream();
-                }
+                sr2pr = conn.getErrorStream();
             }
             for(Map.Entry<String, List<String>> pv : headers2.entrySet()){
                 if(pv.getKey() == null)continue;
