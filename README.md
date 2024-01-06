@@ -15,6 +15,8 @@ You can also specify other headers and the request body to be forwarded to the t
 `Access-Control-Allow-Methods: *`<br>
 `Access-Control-Max-Age: 86400`<br>
 
+Error 445 is an internal error, the header `x-cp-reason` in the response will indicate the reason.
+
 # Example
 ```javascript
 function corsProxy(

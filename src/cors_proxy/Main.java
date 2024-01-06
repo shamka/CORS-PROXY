@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 import static java.lang.System.setProperty;
 
 public class Main extends JFrame {
-    private static final String VERSION = "0.0.4";
+    private static final String VERSION = "1.0.0";
     public Main (){
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
@@ -197,7 +197,7 @@ public class Main extends JFrame {
                 stCode = conn.getResponseCode();
             }
             catch (Throwable e){
-                stCode = 502;
+                stCode = 445;
                 gds.add("X-Cp-Reason", e.toString());
             }
             Map<String, List<String>> headers2 = conn.getHeaderFields();
