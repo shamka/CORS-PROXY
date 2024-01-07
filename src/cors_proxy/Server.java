@@ -33,10 +33,25 @@ public class Server {
             output.write(buffer, 0, bytesRead);
     }
 
-    public static void startServer(){
-        startServer(LOCAL_PORT);
+    private Server(){}
+
+    private static HttpServer singleTonServer = null;
+
+    @SuppressWarnings("UnusedReturnValue")
+    public static boolean startServer(){
+        if(singleTonServer == null){
+            singleTonServer = startServer(LOCAL_PORT);
+        }
+        return singleTonServer != null;
     }
-    public static void startServer(int port){
+    @SuppressWarnings("UnusedReturnValue")
+    public static boolean stopServer(){
+        if(singleTonServer == null)return false;
+        singleTonServer.stop(0);
+        singleTonServer = null;
+        return true;
+    }
+    private static HttpServer startServer(int port){
         SSLContext context;
         try {
             context = SSLContext.getInstance("TLS");
@@ -50,7 +65,7 @@ public class Server {
                     return new X509Certificate[0];
                 }
             }}, new SecureRandom());
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {return;}
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {return null;}
 
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 
@@ -106,11 +121,11 @@ public class Server {
             for(Map.Entry<String, List<String>> pv : headers.entrySet()){
                 if(pv.getKey() == null)continue;
                 if(pv.getValue() == null)continue;
-                if(pv.getKey().equalsIgnoreCase("x-cp-method")) continue;
-                if(pv.getKey().equalsIgnoreCase("host")) continue;
-                if(pv.getKey().equalsIgnoreCase("cookie")) continue;
-                if(pv.getKey().toLowerCase().startsWith("sec-fetch-")) continue;
-                if(pv.getKey().equalsIgnoreCase("x-cp-url")) continue;
+                if(pv.getKey().equalsIgnoreCase("x-cp-method")
+                    ||pv.getKey().equalsIgnoreCase("host")
+                    ||pv.getKey().equalsIgnoreCase("cookie")
+                    ||pv.getKey().toLowerCase().startsWith("sec-fetch-")
+                    ||pv.getKey().equalsIgnoreCase("x-cp-url")) continue;
                 for(String v : pv.getValue()) {
                     conn.addRequestProperty(pv.getKey(), v);
                 }
@@ -145,13 +160,13 @@ public class Server {
             for(Map.Entry<String, List<String>> pv : headers2.entrySet()){
                 if(pv.getKey() == null)continue;
                 if(pv.getValue() == null)continue;
-                if(pv.getKey().equalsIgnoreCase("access-control-allow-origin")) continue;
-                if(pv.getKey().equalsIgnoreCase("access-control-allow-headers")) continue;
-                if(pv.getKey().equalsIgnoreCase("access-control-allow-methods")) continue;
-                if(pv.getKey().equalsIgnoreCase("access-control-max-age")) continue;
-                if(pv.getKey().equalsIgnoreCase("access-control-expose-headers")) continue;
-                if(pv.getKey().equalsIgnoreCase("set-cookie")) continue;
-                if(pv.getKey().equalsIgnoreCase("set-cookie2")) continue;
+                if(pv.getKey().equalsIgnoreCase("access-control-allow-origin")
+                    ||pv.getKey().equalsIgnoreCase("access-control-allow-headers")
+                    ||pv.getKey().equalsIgnoreCase("access-control-allow-methods")
+                    ||pv.getKey().equalsIgnoreCase("access-control-max-age")
+                    ||pv.getKey().equalsIgnoreCase("access-control-expose-headers")
+                    ||pv.getKey().equalsIgnoreCase("set-cookie")
+                    ||pv.getKey().equalsIgnoreCase("set-cookie2")) continue;
                 for(String v : pv.getValue())
                     gds.set(pv.getKey(), v);
             }
@@ -166,6 +181,7 @@ public class Server {
         });
         server.setExecutor(Executors.newFixedThreadPool(10));
         server.start();
+        return server;
     }
 
 }
