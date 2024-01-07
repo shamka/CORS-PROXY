@@ -3,15 +3,10 @@ package cors_proxy;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpServer;
 
-import javax.imageio.ImageIO;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,76 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
-import static java.lang.System.setProperty;
-
-public class Main extends JFrame {
-    private static final String VERSION = "1.0.1";
-    public Main (){
-        Container c = getContentPane();
-        c.setLayout(new BorderLayout());
-        setTitle("CORS PROXY");
-        setPreferredSize(new Dimension(240, 80));
-        JLabel ver = new JLabel("Version: "+VERSION,JLabel.CENTER);
-        getContentPane().add(ver);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        addWindowStateListener(e -> {
-            if((e.getNewState() == 1) && SystemTray.isSupported()) {
-                setVisible(false);
-            }
-        });
-        pack();
-        boolean trayB = false;
-        BufferedImage iconImage;
-        try(InputStream is = this.getClass().getClassLoader().getResourceAsStream("res/mipmap/icon.png")){
-            if(is != null) {
-                iconImage = ImageIO.read(is);
-                trayB = true;
-            }
-            else throw new RuntimeException();
-        } catch (Exception ignored) {
-            iconImage = new BufferedImage(32,32,BufferedImage.TYPE_INT_RGB);
-        }
-
-        if (trayB && !SystemTray.isSupported()) {
-            setVisible(true);
-        }
-        else{
-            setVisible(false);
-            final PopupMenu popup = new PopupMenu();
-            final SystemTray tray = SystemTray.getSystemTray();
-
-            MenuItem version = new MenuItem("Version: "+VERSION);
-            version.setEnabled(false);
-            MenuItem exitItem = new MenuItem("Exit");
-            exitItem.setActionCommand("EXIT");
-            exitItem.addActionListener(e -> {
-                if("EXIT".equals(e.getActionCommand()))
-                    System.exit(0);
-            });
-            popup.add(version);
-            popup.add(exitItem);
-            final TrayIcon trayIcon = new TrayIcon(iconImage.getScaledInstance(16,-1,Image.SCALE_SMOOTH));
-            trayIcon.setPopupMenu(popup);
-            trayIcon.setActionCommand("OPEN");
-            trayIcon.addActionListener(e -> {
-                if("OPEN".equals(e.getActionCommand())) {
-                    setVisible(true);
-                    setState(Frame.NORMAL);
-                    requestFocus();
-                }
-            });
-            try {
-                tray.add(trayIcon);
-            } catch (AWTException e) {
-                setVisible(true);
-            }
-        }
-
-        main2(LOCAL_PORT);
-    }
-
-    private static final int LOCAL_PORT = 61988;
-    public static void copyStream(InputStream input, OutputStream output) throws IOException
+public class Server {
+    public static final String VERSION = "1.1.0";
+    public static final int LOCAL_PORT = 61988;
+    private static void copyStream(InputStream input, OutputStream output) throws IOException
     {
         byte[] buffer = new byte[1024];
         int bytesRead;
@@ -104,7 +33,10 @@ public class Main extends JFrame {
             output.write(buffer, 0, bytesRead);
     }
 
-    public static void main2(int port){
+    public static void startServer(){
+        startServer(LOCAL_PORT);
+    }
+    public static void startServer(int port){
         SSLContext context;
         try {
             context = SSLContext.getInstance("TLS");
@@ -236,18 +168,4 @@ public class Main extends JFrame {
         server.start();
     }
 
-    public static void main(String[] args) {
-        setProperty("sun.net.http.allowRestrictedHeaders", "true");
-        Console console = System.console();
-        if(console == null){
-            new Main();
-        }
-        else{
-            //CONSOLE
-            System.out.println("Version: " + VERSION);
-            System.out.println("Press Ctrl+C to exit..");
-            main2(LOCAL_PORT);
-        }
-
-    }
 }
