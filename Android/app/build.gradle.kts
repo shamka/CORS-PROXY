@@ -3,6 +3,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("C:\\Android\\keys.jks")
+            storePassword = "7"
+            keyAlias = "release"
+            keyPassword = "7"
+        }
+    }
     namespace = "mtm.cors_proxy"
     compileSdk = 34
 
@@ -11,14 +19,15 @@ android {
         minSdk = 23
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.1"
 
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = true
@@ -31,6 +40,6 @@ android {
     }
 }
 dependencies {
-    implementation("com.sun.net.httpserver:http:20070405")
+    implementation(fileTree("libs") { include("*.jar") })
 }
 

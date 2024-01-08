@@ -1,3 +1,5 @@
 *.class
 *.jar
 /build/
+
+/Android/app/release/

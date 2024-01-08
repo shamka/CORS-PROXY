@@ -1,5 +1,7 @@
 package cors_proxy;
 
+import android.annotation.SuppressLint;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpServer;
 
@@ -36,13 +38,15 @@ public class Server {
     private Server(){}
 
     private static HttpServer singleTonServer = null;
+    private static boolean singleTonServerPrep = false;
 
     @SuppressWarnings("UnusedReturnValue")
     public static boolean startServer(){
-        if(singleTonServer == null){
-            singleTonServer = startServer(LOCAL_PORT);
+        if(singleTonServer == null && !singleTonServerPrep){
+            singleTonServerPrep = true;
+            new Thread(() -> startServer(LOCAL_PORT)).start();
         }
-        return singleTonServer != null;
+        return singleTonServer != null || singleTonServerPrep;
     }
     @SuppressWarnings("UnusedReturnValue")
     public static boolean stopServer(){
@@ -51,13 +55,16 @@ public class Server {
         singleTonServer = null;
         return true;
     }
-    private static HttpServer startServer(int port){
+    private static void startServer(int port){
+
         SSLContext context;
         try {
             context = SSLContext.getInstance("TLS");
             context.init(null, new TrustManager[]{new X509TrustManager() {
+                @SuppressLint("TrustAllX509TrustManager")
                 @Override
                 public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                @SuppressLint("TrustAllX509TrustManager")
                 @Override
                 public void checkServerTrusted(X509Certificate[] chain, String authType) {}
                 @Override
@@ -65,7 +72,7 @@ public class Server {
                     return new X509Certificate[0];
                 }
             }}, new SecureRandom());
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {return null;}
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {return;}
 
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 
@@ -181,7 +188,8 @@ public class Server {
         });
         server.setExecutor(Executors.newFixedThreadPool(10));
         server.start();
-        return server;
+        singleTonServer = server;
+        singleTonServerPrep = false;
     }
 
 }

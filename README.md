@@ -1,6 +1,7 @@
 # CORS PROXY
-Helps the browser to make a CORS request to a resource that does not expose permissive headers
-link: https://github.com/shamka/CORS-PROXY
+Helps the browser to make a CORS request to a resource that does not expose permissive headers<br>
+<br>
+Permanent link: https://github.com/shamka/CORS-PROXY
 
 # How to compile
 Start compile.bat (Windows), or compile.sh (Unix/Linux)
