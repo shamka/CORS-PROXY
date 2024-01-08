@@ -1,4 +1,4 @@
-  Privacy Policy body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding:1em; } **Privacy Policy**
+**Privacy Policy**
 
 Muslim Team built the CORS Proxy app as an Open Source app. This SERVICE is provided by Muslim Team at no cost and is intended for use as is.
 
