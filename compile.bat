@@ -6,7 +6,7 @@ cd "%~dp0"
 @mkdir build
 echo javac --release 8 -g:none -d build -s src\ src\cors_proxy\*.java
 javac --release 8 -g:none -d build -s src\ src\cors_proxy\*.java
-xcopy res\mipmap\ build\res\mipmap\ /S
+xcopy res build\res\ /H /Y /C /R /S
 echo jar cfe cors_proxy.jar cors_proxy.Main -C build/ .
 jar cfe cors_proxy.jar cors_proxy.JarMain -C build/ .
 echo Done.
