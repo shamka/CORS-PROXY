@@ -3,6 +3,8 @@ Helps the browser to make a CORS request to a resource that does not expose perm
 <br>
 Permanent link: https://github.com/shamka/CORS-PROXY
 
+Google Play: https://play.google.com/store/apps/details?id=mtm.cors_proxy
+
 # How to compile
 Start compile.bat (Windows), or compile.sh (Unix/Linux)
 A JDK is required. It is also necessary that the PATH contains a path to javac and jar.
