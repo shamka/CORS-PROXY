@@ -69,7 +69,12 @@ public class ServerApk extends Service {
             }
             Toast.makeText(getBaseContext(),R.string.stopping, Toast.LENGTH_SHORT).show();
             Server.stopServer();
-            stopForeground(true);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                stopForeground(true);
+            }
+            else {
+                stopForeground(STOP_FOREGROUND_REMOVE);
+            }
             isRunning = false;
             stopSelf(idRunning);
             stopSelf(startId);

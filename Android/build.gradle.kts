@@ -2,3 +2,9 @@
 plugins {
     id("com.android.application") version "8.0.2" apply false
 }
+allprojects {
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.add("-Xlint:deprecation")
+        options.isDeprecation = true
+    }
+}
