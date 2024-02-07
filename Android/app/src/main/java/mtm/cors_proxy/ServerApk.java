@@ -7,8 +7,10 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Icon;
+import android.os.Build;
 import android.os.IBinder;
 import android.widget.Toast;
 
@@ -51,7 +53,12 @@ public class ServerApk extends Service {
             Toast.makeText(this,R.string.starting, Toast.LENGTH_SHORT).show();
             idRunning = startId;
 
-            startForeground(101, getNotification());
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
+                startForeground(101, getNotification());
+            }
+            else{
+                startForeground(101, getNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST);
+            }
             Server.startServer();
             return START_REDELIVER_INTENT;
         }
