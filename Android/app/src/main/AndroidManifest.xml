@@ -8,6 +8,7 @@
 
 
     <application
+        android:name=".App"
         android:icon="@mipmap/icon"
         android:roundIcon="@mipmap/icon"
         android:label="@string/app_name">
@@ -23,7 +24,7 @@
             android:exported="false">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="foo"
+                android:value="The reason is the need for continuous operation of the HTTP server"
                 />
         </service>
     </application>

@@ -39,6 +39,7 @@ public class ServerApk extends Service {
     @SuppressLint("ForegroundServiceType")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        App app = (App)getApplication();
         if(intent == null){
             Toast.makeText(this, "NULL", Toast.LENGTH_LONG).show();
             stopSelf();
@@ -50,6 +51,7 @@ public class ServerApk extends Service {
             }
 
             isRunning = true;
+            app.setRun(true);
             Toast.makeText(this,R.string.starting, Toast.LENGTH_SHORT).show();
             idRunning = startId;
 
@@ -63,18 +65,14 @@ public class ServerApk extends Service {
             return START_REDELIVER_INTENT;
         }
         if(CMD_STOP.equals(intent.getAction())){
+            app.setRun(false);
             if(!isRunning) {
                 stopSelf();
                 return START_NOT_STICKY;
             }
             Toast.makeText(getBaseContext(),R.string.stopping, Toast.LENGTH_SHORT).show();
             Server.stopServer();
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                stopForeground(true);
-            }
-            else {
-                stopForeground(STOP_FOREGROUND_REMOVE);
-            }
+            stopForeground(STOP_FOREGROUND_REMOVE);
             isRunning = false;
             stopSelf(idRunning);
             stopSelf(startId);
@@ -84,31 +82,27 @@ public class ServerApk extends Service {
     }
 
     private Notification getNotification(){
-        Notification.Builder notificationBuilder = new Notification.Builder(this);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            NotificationManager notificationManager =
-                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        Notification.Builder notificationBuilder = new Notification.Builder(this,"11");
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-            NotificationChannel channel = new NotificationChannel("11", "Default",
-                    NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("Default description");
-            channel.enableLights(true);
-            channel.setLightColor(Color.RED);
-            channel.enableVibration(false);
-            channel.setImportance(NotificationManager.IMPORTANCE_NONE);
-            notificationManager.createNotificationChannel(channel);
-            notificationBuilder.setChannelId("11");
-        }
+        NotificationChannel channel = new NotificationChannel("11", "Default",
+                NotificationManager.IMPORTANCE_MIN);
+        channel.setDescription("Default description");
+        channel.enableLights(true);
+        channel.setLightColor(Color.RED);
+        channel.enableVibration(false);
+        channel.setImportance(NotificationManager.IMPORTANCE_NONE);
+        notificationManager.createNotificationChannel(channel);
 
         notificationBuilder.setContentTitle(getString(R.string.is_running))
                 .setContentText(String.format(getString(R.string.version), Server.VERSION))
-                .setPriority(Notification.PRIORITY_MIN)
                 .setOngoing(true)
                 .setContentIntent(PendingIntent.getActivity(this,
                         0,
                         new Intent(this, MainApk.class).setAction(CMD_STOP),
                         PendingIntent.FLAG_IMMUTABLE))
-                .setSmallIcon(R.mipmap.notif);
+                .setSmallIcon(R.drawable.notif);
 
         return notificationBuilder.build();
     }

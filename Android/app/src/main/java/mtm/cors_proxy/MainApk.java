@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Toast;
 
+import java.util.Objects;
+
 
 public class MainApk extends Activity {
     @Override
@@ -32,31 +34,33 @@ public class MainApk extends Activity {
     }
 
     private boolean parseIntent(Intent intent){
-        switch(intent.getAction()){
+        App app = (App)getApplication();
+        switch(Objects.requireNonNull(intent.getAction())){
             default:return false;
 
             case ServerApk.CMD_START:
             case ACTION_MAIN: {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    if (PackageManager.PERMISSION_GRANTED != checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)) {
-                        if(!getNotSt()) {
-                            if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 102);
+                if(app.isRun()){
+                    startService(new Intent(this, ServerApk.class).setAction(ServerApk.CMD_STOP));
+                }
+                else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (PackageManager.PERMISSION_GRANTED != checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)) {
+                            if (!getNotSt()) {
+                                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 102);
+                                } else {
+                                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+                                }
+                                return true;
                             } else {
-                                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+                                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 103);
+                                return true;
                             }
-                            return true;
-                        }
-                        else{
-                            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 103);
-                            return true;
                         }
                     }
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                     startForegroundService(new Intent(this, ServerApk.class).setAction(ServerApk.CMD_START));
-                else
-                    startService(new Intent(this, ServerApk.class).setAction(ServerApk.CMD_START));
+                }
                 break;
             }
 
