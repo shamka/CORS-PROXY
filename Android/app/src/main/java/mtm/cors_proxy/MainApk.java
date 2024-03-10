@@ -1,7 +1,6 @@
 package mtm.cors_proxy;
 
 import static android.content.Intent.ACTION_MAIN;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.Manifest;
 import android.app.Activity;
@@ -52,11 +51,10 @@ public class MainApk extends Activity {
                                 } else {
                                     requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
                                 }
-                                return true;
                             } else {
                                 requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 103);
-                                return true;
                             }
+                            return true;
                         }
                     }
                     startForegroundService(new Intent(this, ServerApk.class).setAction(ServerApk.CMD_START));
@@ -73,6 +71,7 @@ public class MainApk extends Activity {
         return true;
     }
 
+    /** @noinspection NullableProblems*/
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if(requestCode == 101){
@@ -109,6 +108,7 @@ public class MainApk extends Activity {
     }
 
     SharedPreferences sPref;
+    /** @noinspection SameParameterValue*/
     void setNotSt(boolean st) {
         sPref = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor ed = sPref.edit();
