@@ -1,6 +1,6 @@
 **Privacy Policy**
 
-Muslim Team built the CORS Proxy app as an Open Source app. This SERVICE is provided by Muslim Team at no cost and is intended for use as is.
+Muslim jamaat built the CORS Proxy app as an Open Source app. This SERVICE is provided by Muslim jamaat at no cost and is intended for use as is.
 
 This page is used to inform visitors regarding my policies with the collection, use, and disclosure of Personal Information if anyone decided to use my Service.
 
