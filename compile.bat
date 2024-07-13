@@ -4,8 +4,8 @@ title CORS PROXY compiler
 cd "%~dp0"
 @rmdir /S /Q build
 @mkdir build
-echo javac --release 8 -g:none -d build -s src\ src\cors_proxy\*.java
-javac --release 8 -g:none -d build -s src\ src\cors_proxy\*.java
+echo javac --release 8 -g:none -d build -s src\ src\cors_proxy\*.java src\android\annotation\*.java 
+javac --release 8 -g:none -d build -s src\ src\cors_proxy\*.java src\android\annotation\*.java
 xcopy res build\res\ /H /Y /C /R /S
 echo jar cfe cors_proxy.jar cors_proxy.Main -C build/ .
 jar cfe cors_proxy.jar cors_proxy.JarMain -C build/ .

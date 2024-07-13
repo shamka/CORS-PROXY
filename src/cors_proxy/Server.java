@@ -27,7 +27,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class Server {
-    public static final String VERSION = "1.1.0";
+    public static final String VERSION = "1.1.1";
     public static final int LOCAL_PORT = 61988;
     private static void copyStream(InputStream input, OutputStream output) throws IOException
     {
@@ -176,7 +176,7 @@ public class Server {
                             || pv.getKey().equalsIgnoreCase("set-cookie")
                             || pv.getKey().equalsIgnoreCase("set-cookie2")) continue;
                     for (String v : pv.getValue())
-                        gds.set(pv.getKey(), v);
+                        gds.add(pv.getKey(), v);
                 }
                 gds.set("Access-Control-Allow-Origin", "*");
                 gds.set("Access-Control-Allow-Headers", "*");
