@@ -18,7 +18,7 @@ android {
         applicationId = "mja.cors_proxy"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
+        versionCode = 1
         versionName = "1.1.2"
 
     }
@@ -30,7 +30,7 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         debug {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

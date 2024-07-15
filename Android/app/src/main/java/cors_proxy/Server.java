@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -61,7 +62,7 @@ public class Server {
         }
         return singleTonServer != null || singleTonServerPrep;
     }
-    @SuppressWarnings("UnusedReturnValue")
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
     public static boolean stopServer(){
         if(singleTonServer == null)return false;
         singleTonServer.stop(0);
@@ -131,8 +132,14 @@ public class Server {
                     return;
                 }
                 Headers headers = exchange.getRequestHeaders();
-                String method = Objects.requireNonNull(headers.get("x-cp-method")).get(0);
-                URL url = new URL(Objects.requireNonNull(headers.get("x-cp-url")).get(0));
+                String method = headers.getFirst("x-cp-method");
+                String hUrl = headers.getFirst("x-cp-url");
+                if(method == null || hUrl == null){
+                    exchange.sendResponseHeaders(400, -1);
+                    exchange.close();
+                    return;
+                }
+                URL url = URI.create(hUrl).toURL();
 
                 InputStream cl2pr = exchange.getRequestBody();
                 OutputStream pr2cl = exchange.getResponseBody();
