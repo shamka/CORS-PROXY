@@ -27,26 +27,19 @@ import javax.net.ssl.X509TrustManager;
 public class Server {
     public static final String VERSION = "1.1.2";
     public static final int LOCAL_PORT = 61988;
-    private static final Set<String> ignoreExposeHeaders = Collections.unmodifiableSet(new HashSet<>(
-            Arrays.asList("cache-control","content-language","content-length","content-type","expires","last-modified","pragma")
-    ));
-    private static final Set<String> ignoreRequestHeaders = Collections.unmodifiableSet(new HashSet<>(
-            Arrays.asList("x-cp-method","host","cookie","cookie2","x-cp-url")
-    ));
-    private static final Set<String> ignoreRequestHeadersPrefix = Collections.unmodifiableSet(new HashSet<>(
-            Collections.singletonList("sec-fetch-")
-    ));
-    private static final Set<String> ignoreResponseHeaders = Collections.unmodifiableSet(new HashSet<>(
-            Arrays.asList(
-                    "access-control-allow-origin",
-                    "access-control-allow-headers",
-                    "access-control-allow-methods",
-                    "access-control-max-age",
-                    "access-control-expose-headers",
-                    "set-cookie",
-                    "set-cookie2"
-            )
-    ));
+    private static final Set<String> ignoreExposeHeaders = Set.of(
+            "cache-control", "content-language", "content-length",
+            "content-type", "expires", "last-modified", "pragma");
+    private static final Set<String> ignoreRequestHeaders = Set.of(
+            "x-cp-method", "host", "cookie", "cookie2", "x-cp-url");
+    private static final Set<String> ignoreRequestHeadersPrefix = Set.copyOf(Collections.singletonList("sec-fetch-"));
+    private static final Set<String> ignoreResponseHeaders = Set.of(
+            "access-control-allow-origin",
+            "access-control-allow-headers",
+            "access-control-allow-methods",
+            "access-control-max-age",
+            "access-control-expose-headers",
+            "set-cookie", "set-cookie2");
     private static void copyStream(InputStream input, OutputStream output) throws IOException
     {
         byte[] buffer = new byte[1024];
