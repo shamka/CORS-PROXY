@@ -1,4 +1,4 @@
-package mtm.cors_proxy;
+package mja.cors_proxy;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;

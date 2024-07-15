@@ -11,15 +11,15 @@ android {
             keyPassword = "7"
         }
     }
-    namespace = "mtm.cors_proxy"
-    compileSdk = 34
+    namespace = "mja.cors_proxy"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "mtm.cors_proxy"
+        applicationId = "mja.cors_proxy"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.3"
+        targetSdk = 35
+        versionCode = 4
+        versionName = "1.1.2"
 
     }
 

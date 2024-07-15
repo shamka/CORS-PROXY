@@ -1,4 +1,4 @@
-package mtm.cors_proxy;
+package mja.cors_proxy;
 
 import static android.content.Intent.ACTION_MAIN;
 

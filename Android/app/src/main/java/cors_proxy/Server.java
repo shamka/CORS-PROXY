@@ -16,9 +16,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -27,8 +25,28 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class Server {
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.2";
     public static final int LOCAL_PORT = 61988;
+    private static final Set<String> ignoreExposeHeaders = Collections.unmodifiableSet(new HashSet<>(
+            Arrays.asList("cache-control","content-language","content-length","content-type","expires","last-modified","pragma")
+    ));
+    private static final Set<String> ignoreRequestHeaders = Collections.unmodifiableSet(new HashSet<>(
+            Arrays.asList("x-cp-method","host","cookie","cookie2","x-cp-url")
+    ));
+    private static final Set<String> ignoreRequestHeadersPrefix = Collections.unmodifiableSet(new HashSet<>(
+            Collections.singletonList("sec-fetch-")
+    ));
+    private static final Set<String> ignoreResponseHeaders = Collections.unmodifiableSet(new HashSet<>(
+            Arrays.asList(
+                    "access-control-allow-origin",
+                    "access-control-allow-headers",
+                    "access-control-allow-methods",
+                    "access-control-max-age",
+                    "access-control-expose-headers",
+                    "set-cookie",
+                    "set-cookie2"
+            )
+    ));
     private static void copyStream(InputStream input, OutputStream output) throws IOException
     {
         byte[] buffer = new byte[1024];
@@ -91,11 +109,25 @@ public class Server {
             server.createContext("/cors", exchange -> {
                 if ("OPTIONS".equals(exchange.getRequestMethod())) {
                     Headers gds = exchange.getResponseHeaders();
-                    gds.set("Access-Control-Allow-Origin", "*");
-                    gds.set("Access-Control-Allow-Headers", "*");
-                    gds.set("Access-Control-Allow-Methods", "*");
-                    gds.set("Access-Control-Expose-Headers", "*");
+                    Headers reGds = exchange.getRequestHeaders();
+
+                    String origin = reGds.getFirst("Origin");
+                    gds.set("Access-Control-Allow-Origin", (origin==null)?"*":origin);
+
+                    String allowMethods = reGds.getFirst("Access-Control-Request-Method");
+                    if(allowMethods != null)gds.set("Access-Control-Allow-Methods", "POST");
+
+                    String allowHeaders = reGds.getFirst("Access-Control-Request-Headers");
+                    if(allowHeaders == null)allowHeaders = "";
+                    else allowHeaders = "," + allowHeaders;
+                    allowHeaders = "Accept,Accept-Language,Content-Language,Content-Type,Range" + allowHeaders;
+                    gds.set("Access-Control-Allow-Headers", allowHeaders);
+
                     gds.set("Access-Control-Max-Age", "86400");
+                    gds.set("Vary", "Access-Control-Request-Headers,Origin");
+
+                    gds.set("Access-Control-Allow-Credentials", "true");
+
                     exchange.sendResponseHeaders(204, -1);
                     exchange.close();
                     return;
@@ -128,14 +160,15 @@ public class Server {
                         return;
                     }
                 }
+                outer:
                 for (Map.Entry<String, List<String>> pv : headers.entrySet()) {
                     if (pv.getKey() == null) continue;
                     if (pv.getValue() == null) continue;
-                    if (pv.getKey().equalsIgnoreCase("x-cp-method")
-                            || pv.getKey().equalsIgnoreCase("host")
-                            || pv.getKey().equalsIgnoreCase("cookie")
-                            || pv.getKey().toLowerCase().startsWith("sec-fetch-")
-                            || pv.getKey().equalsIgnoreCase("x-cp-url")) continue;
+                    String key = pv.getKey().toLowerCase();
+                    if(ignoreRequestHeaders.contains(key))continue;
+                    for(String v : ignoreRequestHeadersPrefix)
+                        if(key.startsWith(v))continue outer;
+
                     for (String v : pv.getValue()) {
                         conn.addRequestProperty(pv.getKey(), v);
                     }
@@ -165,24 +198,25 @@ public class Server {
                 } catch (IOException e) {
                     sr2pr = conn.getErrorStream();
                 }
+                List<String> expose = new ArrayList<>();
                 for (Map.Entry<String, List<String>> pv : headers2.entrySet()) {
                     if (pv.getKey() == null) continue;
                     if (pv.getValue() == null) continue;
-                    if (pv.getKey().equalsIgnoreCase("access-control-allow-origin")
-                            || pv.getKey().equalsIgnoreCase("access-control-allow-headers")
-                            || pv.getKey().equalsIgnoreCase("access-control-allow-methods")
-                            || pv.getKey().equalsIgnoreCase("access-control-max-age")
-                            || pv.getKey().equalsIgnoreCase("access-control-expose-headers")
-                            || pv.getKey().equalsIgnoreCase("set-cookie")
-                            || pv.getKey().equalsIgnoreCase("set-cookie2")) continue;
+                    String key = pv.getKey().toLowerCase();
+                    if(ignoreResponseHeaders.contains(key))continue;
                     for (String v : pv.getValue())
                         gds.add(pv.getKey(), v);
+                    if(!ignoreExposeHeaders.contains(key))
+                        expose.add(pv.getKey());
                 }
-                gds.set("Access-Control-Allow-Origin", "*");
-                gds.set("Access-Control-Allow-Headers", "*");
-                gds.set("Access-Control-Allow-Methods", "*");
-                gds.set("Access-Control-Expose-Headers", "*");
-                gds.set("Access-Control-Max-Age", "86400");
+                {
+                    String origin = headers.getFirst("Origin");
+                    gds.add("Access-Control-Allow-Origin", (origin==null)?"*":origin);
+                }
+                gds.add("Access-Control-Allow-Credentials", "true");
+                gds.add("Access-Control-Expose-Headers", String.join(",", expose));
+                gds.add("Access-Control-Max-Age", "86400");
+                gds.add("Vary", "Origin");
                 exchange.sendResponseHeaders(stCode, 0);
                 if (sr2pr != null) copyStream(sr2pr, pr2cl);
                 pr2cl.close();
