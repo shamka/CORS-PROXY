@@ -2,3 +2,7 @@
 /build/
 
 /Android/app/release/
+
+/Android/.idea/deploymentTargetSelector.xml
+/Android/.idea/other.xml
+/cors_proxy.jar
