@@ -33,7 +33,8 @@ public class Server {
             "content-type", "expires", "last-modified", "pragma");
     private static final Set<String> ignoreRequestHeaders = Set.of(
             "x-cp-method", "host", "cookie", "cookie2", "x-cp-url");
-    private static final Set<String> ignoreRequestHeadersPrefix = Set.copyOf(Collections.singletonList("sec-fetch-"));
+    private static final Set<String> ignoreRequestHeadersPrefix = Set.copyOf(
+            Collections.singletonList("sec-fetch-"));
     private static final Set<String> ignoreResponseHeaders = Set.of(
             "access-control-allow-origin",
             "access-control-allow-headers",
@@ -189,8 +190,8 @@ public class Server {
                     stCode = conn.getResponseCode();
                 } catch (Throwable e) {
                     stCode = 445;
-                    gds.add("X-Cp-Reason", e.toString());
-                    expose.add("X-Cp-Reason");
+                    gds.add("x-cp-reason", e.toString());
+                    expose.add("x-cp-reason");
                 }
                 Map<String, List<String>> headers2 = conn.getHeaderFields();
 
