@@ -26,7 +26,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class Server {
-    public static final String VERSION = "1.1.2";
+    public static final String VERSION = "1.1.3";
     public static final int LOCAL_PORT = 61988;
     private static final Set<String> ignoreExposeHeaders = Set.of(
             "cache-control", "content-language", "content-length",
@@ -182,6 +182,7 @@ public class Server {
                     copyStream(cl2pr, pr2sr);
                 }
                 //RESPONSE
+                List<String> expose = new ArrayList<>();
                 Headers gds = exchange.getResponseHeaders();
                 int stCode;
                 try {
@@ -189,6 +190,7 @@ public class Server {
                 } catch (Throwable e) {
                     stCode = 445;
                     gds.add("X-Cp-Reason", e.toString());
+                    expose.add("X-Cp-Reason");
                 }
                 Map<String, List<String>> headers2 = conn.getHeaderFields();
 
@@ -198,7 +200,6 @@ public class Server {
                 } catch (IOException e) {
                     sr2pr = conn.getErrorStream();
                 }
-                List<String> expose = new ArrayList<>();
                 for (Map.Entry<String, List<String>> pv : headers2.entrySet()) {
                     if (pv.getKey() == null) continue;
                     if (pv.getValue() == null) continue;
