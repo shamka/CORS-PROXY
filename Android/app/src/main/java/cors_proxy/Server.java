@@ -26,7 +26,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class Server {
-    public static final String VERSION = "1.1.3";
+    public static final String VERSION = "1.1.4";
     public static final int LOCAL_PORT = 61988;
     private static final Set<String> ignoreExposeHeaders = Set.of(
             "cache-control", "content-language", "content-length",
@@ -184,6 +184,7 @@ public class Server {
                 }
                 //RESPONSE
                 List<String> expose = new ArrayList<>();
+                expose.add("Access-Control-Expose-Headers");
                 Headers gds = exchange.getResponseHeaders();
                 int stCode;
                 try {
