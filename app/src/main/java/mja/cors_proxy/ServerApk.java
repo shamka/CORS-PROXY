@@ -13,8 +13,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.widget.Toast;
 
-import cors_proxy.Server;
-
 public class ServerApk extends Service {
 
     public static final String CMD_START = "cmd_start";

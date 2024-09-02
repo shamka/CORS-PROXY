@@ -13,7 +13,7 @@ window.fetch=(()=>{
                 opts.headers = {};
             opts.headers["x-cp-method"] = opts.method??"GET";
             opts.headers["x-cp-url"] = url;
-            url = "http://127.0.0.1:61988/cors";
+            url = "/cors";
             opts.mode = "cors";
             opts.method = "POST";
         }

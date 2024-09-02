@@ -14,7 +14,5 @@
 .cxx
 local.properties
 
-/app/jar/out/
-/app/build_jar/
 /app/*.jar
 /*.jar

@@ -1,4 +1,4 @@
-package cors_proxy;
+package mja.cors_proxy;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -9,7 +9,7 @@ import java.lang.management.ManagementFactory;
 
 import static java.lang.System.setProperty;
 
-public class JarMain extends JFrame {
+public class App extends JFrame {
 
     public static final String GUI_VERSION = "1.0.0";
     public static void main(String[] args) {
@@ -26,7 +26,7 @@ public class JarMain extends JFrame {
         else
             useWin = true;
         if(useWin){
-            new JarMain();
+            new App();
         }
         else{
             //CONSOLE
@@ -39,7 +39,7 @@ public class JarMain extends JFrame {
         }
 
     }
-    public JarMain(){
+    public App(){
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
         setTitle("CORS PROXY");
@@ -55,7 +55,7 @@ public class JarMain extends JFrame {
         pack();
         boolean trayB = false;
         BufferedImage iconImage;
-        try(InputStream is = this.getClass().getClassLoader().getResourceAsStream("res/mipmap/icon.png")){
+        try(InputStream is = Server.getAppResource("icon.png")){
             if(is != null) {
                 iconImage = ImageIO.read(is);
                 if(iconImage==null)throw new RuntimeException();
@@ -105,5 +105,10 @@ public class JarMain extends JFrame {
         }
 
         Server.startServer();
+    }
+
+    public static InputStream open(String path) {
+        if(path.endsWith("/"))throw new Server.HttpError(403);
+        return Server.class.getResourceAsStream("/assets/"+path);
     }
 }

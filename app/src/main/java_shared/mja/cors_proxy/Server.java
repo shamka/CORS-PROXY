@@ -1,4 +1,4 @@
-package cors_proxy;
+package mja.cors_proxy;
 
 import android.annotation.SuppressLint;
 
@@ -6,7 +6,6 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,6 +27,23 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class Server {
+
+    public static class HttpError extends RuntimeException {
+        public int code;
+        public String file;
+
+        HttpError(int code, String file){
+            this.code = code;
+            this.file = file;
+        }
+        @SuppressLint("DefaultLocale")
+        HttpError(int code){
+            this.code = code;
+            this.file = String.format("%d.html",code);
+        }
+
+    }
+
     public static final String VERSION = "1.1.5";
     public static final int LOCAL_PORT = 61988;
     private static final Set<String> ignoreExposeHeaders = Set.of(
@@ -52,10 +68,6 @@ public class Server {
             output.write(buffer, 0, bytesRead);
     }
 
-    private static final boolean runUnderJar = Server.class.getProtectionDomain()
-            .getCodeSource().getLocation().getPath().endsWith(".jar");
-    private static final boolean isAndroid = false;
-
     private Server(){}
 
     private static HttpServer singleTonServer = null;
@@ -77,15 +89,9 @@ public class Server {
         return true;
     }
 
-    private static InputStream getResource(String path){
-        if(isAndroid){
-            return null;
-        }
-        else{
-            return Server.class.getResourceAsStream(path);
-        }
+    public static InputStream getAppResource(String path) {
+            return mja.cors_proxy.App.open(path);
     }
-
 
     /** @noinspection SameParameterValue*/
     @SuppressLint("CustomX509TrustManager")
@@ -121,41 +127,39 @@ public class Server {
             server.createContext("/",exchange -> {
                 String path = exchange.getRequestURI().getPath();
                 try {
-                    if (Objects.equals(path, "/cors")) {
+                    if ("/cors".equals(path)) {
                         parseCors(exchange);
                     }
-                    else if (Objects.equals(path, "/favicon.ico")) {
-                        parseFavicon(exchange);
+                    else if ("/favicon.ico".equals(path)) {
+                        getRes(exchange, "icon.png", "image/png");
                     }
-                    else if (path.startsWith("/leacme/")) {
-                        parseLeacme(exchange);
+                    else if ("/".equals(path)) {
+                        getRes(exchange, "mainPage.html", "text/html;charset=utf-8");
+                    }
+                    else if (path.startsWith("/le_acme/")) {
+                        parseLeAcme(exchange);
                     }
                     else {
-                        exchange.sendResponseHeaders(404,0);
-                        exchange.close();
+                        throw new HttpError(404);
                     }
-                } catch (IOException e) {
-                    exchange.close();
                 }
+                catch (IOException ignored) {}
+                catch (HttpError e){
+                    exchange.sendResponseHeaders(e.code,0);
+                    try(InputStream in = App.open(e.file)){
+                        try(OutputStream out = exchange.getResponseBody()) {
+                            copyStream(in, out);
+                        }
+                    }
+                    catch (HttpError ignored){}
+                }
+                exchange.close();
             });
             server.setExecutor(Executors.newFixedThreadPool(10));
             server.start();
         }
         singleTonServer = server;
         singleTonServerPrep = false;
-    }
-    private static void parseFavicon(HttpExchange exchange) throws IOException{
-        OutputStream pr2cl = exchange.getResponseBody();
-        InputStream in = getResource(isAndroid?"/res/mipmap/ic_f.webp":"/res/mipmap/icon.png");
-        if(in==null){
-            exchange.sendResponseHeaders(404, 0);
-        }
-        else {
-            exchange.sendResponseHeaders(200, in.available());
-            copyStream(in,pr2cl);
-            in.close();
-        }
-        pr2cl.close();
     }
     private static void parseCors(HttpExchange exchange) throws IOException {
         if ("OPTIONS".equals(exchange.getRequestMethod())) {
@@ -183,18 +187,12 @@ public class Server {
             exchange.close();
             return;
         }
-        if (!"POST".equals(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(405, 0);
-            exchange.close();
-            return;
-        }
+        if (!"POST".equals(exchange.getRequestMethod()))throw new HttpError(405);
         Headers headers = exchange.getRequestHeaders();
         String method = headers.getFirst("x-cp-method");
         String hUrl = headers.getFirst("x-cp-url");
         if(method == null || hUrl == null){
-            exchange.sendResponseHeaders(400, 0);
-            exchange.close();
-            return;
+            throw new HttpError(400);
         }
         URL url = URI.create(hUrl).toURL();
 
@@ -212,9 +210,7 @@ public class Server {
                 del.setAccessible(true);
                 mt.set(del.get(conn), method);
             } catch (Exception ignore) {
-                exchange.sendResponseHeaders(405, 0);
-                exchange.close();
-                return;
+                throw new HttpError(405);
             }
         }
         outer:
@@ -281,12 +277,32 @@ public class Server {
         if (sr2pr != null) copyStream(sr2pr, pr2cl);
         pr2cl.close();
     }
-    private static void parseLeacme(HttpExchange exchange) throws IOException{
+    private static void getRes(HttpExchange exchange, String file, String type) throws IOException{
+        try(InputStream in = getAppResource(file)) {
+            exchange.getResponseHeaders().set("Content-Type", type);
+            exchange.sendResponseHeaders(200, in.available());
+            try(OutputStream out = exchange.getResponseBody()) {
+                copyStream(in, out);
+            }
+        }
+    }
+    private static void parseLeAcme(HttpExchange exchange) throws IOException{
         String path = exchange.getRequestURI().getPath();
-        
-        OutputStream pr2cl = exchange.getResponseBody();
-        exchange.sendResponseHeaders(200,0);
-        pr2cl.write(path.getBytes());
-        pr2cl.close();
+        Headers gds = exchange.getResponseHeaders();
+        if (!path.contains("/../")) {
+            if("/le_acme/".equals(path)){
+                gds.set("Location", "LetsEncryptACMEv2.html");
+                exchange.sendResponseHeaders(302, 0);
+            }
+            else try(InputStream in = getAppResource(path.substring(1))) {
+                if(path.endsWith(".js"))gds.set("Content-Type", "text/javascript; charset=utf-8");
+                else if(path.endsWith(".css"))gds.set("Content-Type", "text/css; charset=utf-8");
+                else if(path.endsWith(".html"))gds.set("Content-Type", "text/html; charset=utf-8");
+                exchange.sendResponseHeaders(200, 0);
+                try(OutputStream pr2cl = exchange.getResponseBody()) {
+                    copyStream(in, pr2cl);
+                }
+            }
+        } else throw new HttpError(403);
     }
 }
