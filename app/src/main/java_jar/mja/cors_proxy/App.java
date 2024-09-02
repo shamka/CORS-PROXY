@@ -11,7 +11,7 @@ import static java.lang.System.setProperty;
 
 public class App extends JFrame {
 
-    public static final String GUI_VERSION = "1.0.0";
+    public static final String GUI_VERSION = "1.1";
     public static void main(String[] args) {
         setProperty("sun.net.http.allowRestrictedHeaders", "true");
         boolean useWin;
@@ -31,6 +31,7 @@ public class App extends JFrame {
         else{
             //CONSOLE
             if(hasStdOut) {
+                System.out.println("LeAcme version: " + Server.LE_ACME_VERSION);
                 System.out.println("Gui version: " + GUI_VERSION);
                 System.out.println("Server version: " + Server.VERSION);
                 System.out.println("Press Ctrl+C to exit..");
@@ -43,8 +44,8 @@ public class App extends JFrame {
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
         setTitle("CORS PROXY");
-        setPreferredSize(new Dimension(240, 90));
-        JLabel ver = new JLabel("<html>Gui version: "+GUI_VERSION+"<br>Server Version: "+Server.VERSION+"</html>",JLabel.CENTER);
+        setPreferredSize(new Dimension(240, 100));
+        JLabel ver = new JLabel("<html>LeAcme version: "+Server.LE_ACME_VERSION+"<br>Gui version: "+GUI_VERSION+"<br>Server Version: "+Server.VERSION+"</html>",JLabel.CENTER);
         getContentPane().add(ver);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addWindowStateListener(e -> {
@@ -74,16 +75,19 @@ public class App extends JFrame {
             final PopupMenu popup = new PopupMenu();
             final SystemTray tray = SystemTray.getSystemTray();
 
+            MenuItem versionLeAcme = new MenuItem("LeAcme version: "+Server.LE_ACME_VERSION);
             MenuItem versionGui = new MenuItem("Gui version: "+GUI_VERSION);
             MenuItem version = new MenuItem("Server version: "+Server.VERSION);
             version.setEnabled(false);
             versionGui.setEnabled(false);
+            versionLeAcme.setEnabled(false);
             MenuItem exitItem = new MenuItem("Exit");
             exitItem.setActionCommand("EXIT");
             exitItem.addActionListener(e -> {
                 if("EXIT".equals(e.getActionCommand()))
                     System.exit(0);
             });
+            popup.add(versionLeAcme);
             popup.add(versionGui);
             popup.add(version);
             popup.add(exitItem);
@@ -109,6 +113,8 @@ public class App extends JFrame {
 
     public static InputStream open(String path) {
         if(path.endsWith("/"))throw new Server.HttpError(403);
-        return Server.class.getResourceAsStream("/assets/"+path);
+        InputStream in = Server.class.getResourceAsStream("/assets/"+path);
+        if(in == null)throw new Server.HttpError(404);
+        return in;
     }
 }

@@ -14,8 +14,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -44,7 +42,8 @@ public class Server {
 
     }
 
-    public static final String VERSION = "1.1.5";
+    public static final String VERSION = "1.6";
+    public static final String LE_ACME_VERSION = "2.0";
     public static final int LOCAL_PORT = 61988;
     private static final Set<String> ignoreExposeHeaders = Set.of(
             "cache-control", "content-language", "content-length",
@@ -112,7 +111,7 @@ public class Server {
                     return new X509Certificate[0];
                 }
             }}, new SecureRandom());
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {return;}
+        } catch (Exception e) {return;}
 
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 
@@ -277,32 +276,33 @@ public class Server {
         if (sr2pr != null) copyStream(sr2pr, pr2cl);
         pr2cl.close();
     }
+    private static void parseLeAcme(HttpExchange exchange) throws IOException{
+        String path = exchange.getRequestURI().getPath();
+        if (!path.contains("/../")) {
+            if("/le_acme/".equals(path)){
+                Headers gds = exchange.getResponseHeaders();
+                gds.set("Location", "LetsEncryptACMEv2.html");
+                exchange.sendResponseHeaders(302, 0);
+            }
+            path = path.substring(1);
+            if(path.endsWith(".js"))getRes(exchange, path, "text/javascript; charset=utf-8");
+            else if(path.endsWith(".css"))getRes(exchange, path, "text/css; charset=utf-8");
+            else if(path.endsWith(".html"))getRes(exchange, path, "text/html; charset=utf-8");
+        } else throw new HttpError(403);
+    }
     private static void getRes(HttpExchange exchange, String file, String type) throws IOException{
-        try(InputStream in = getAppResource(file)) {
-            exchange.getResponseHeaders().set("Content-Type", type);
+        Headers gds = exchange.getRequestHeaders();
+        if(LE_ACME_VERSION.equals(gds.getFirst("If-None-Match"))){
+            exchange.sendResponseHeaders(304, -1);
+        }
+        else try(InputStream in = getAppResource(file)) {
+            Headers hds = exchange.getResponseHeaders();
+            hds.set("Content-Type", type);
+            hds.set("ETag", LE_ACME_VERSION);
             exchange.sendResponseHeaders(200, in.available());
             try(OutputStream out = exchange.getResponseBody()) {
                 copyStream(in, out);
             }
         }
-    }
-    private static void parseLeAcme(HttpExchange exchange) throws IOException{
-        String path = exchange.getRequestURI().getPath();
-        Headers gds = exchange.getResponseHeaders();
-        if (!path.contains("/../")) {
-            if("/le_acme/".equals(path)){
-                gds.set("Location", "LetsEncryptACMEv2.html");
-                exchange.sendResponseHeaders(302, 0);
-            }
-            else try(InputStream in = getAppResource(path.substring(1))) {
-                if(path.endsWith(".js"))gds.set("Content-Type", "text/javascript; charset=utf-8");
-                else if(path.endsWith(".css"))gds.set("Content-Type", "text/css; charset=utf-8");
-                else if(path.endsWith(".html"))gds.set("Content-Type", "text/html; charset=utf-8");
-                exchange.sendResponseHeaders(200, 0);
-                try(OutputStream pr2cl = exchange.getResponseBody()) {
-                    copyStream(in, pr2cl);
-                }
-            }
-        } else throw new HttpError(403);
     }
 }
