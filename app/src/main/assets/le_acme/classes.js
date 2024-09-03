@@ -66,7 +66,7 @@ class Asn1{
     };
     static u2x(ar, delim=''){
         if(ar.length < 1)return '';
-        return ar.map(v=>v.toString(16).padStart(2,'0')).join(delim);
+        return [].map.call(ar,v=>v.toString(16).padStart(2,'0')).join(delim);
     }
     static u8concat(...ar){
         let newAr = new Uint8Array(ar.reduce((a,c)=>a+c.length,0));
