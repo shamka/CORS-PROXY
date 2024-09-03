@@ -794,7 +794,7 @@ class DnsZoner{
         if(r===null)return null;
         return {...r,name:idn};
     }
-    async listRecords(domain,type = null, content = null, fullText = true){
+    async listRecords(domain,type = null, content = null, fullText = true, reg = null){
         let r = this.#getDomainRec(domain);
         if(r===null)throw null;
         switch(r.type){
@@ -815,7 +815,9 @@ class DnsZoner{
                             return [r.result,r[`result_info`]];
                         }).catch(() => null);
                     if(a===null)break;
-                    z.push(...a[0].map(v=> {return {
+                    z.push(...a[0]
+                        .filter(v=>reg===null?true:new RegExp(reg).test(v.name))
+                        .map(v=> {return {
                         a:r.token,
                         i:v.id,
                         n:v.name,
@@ -854,7 +856,7 @@ class DnsZoner{
 
             }).catch(() => null);
     }
-    async removeRecords(domain, type = null, value = null,fullText = true){
+    async removeRecords(domain, type = null, value = null,fullText = true, reg = null){
         if(typeof domain==='object'){
             return this.#cfApi(domain.a,
                 `zones/${domain.z}/dns_records/${domain.i}`,'DELETE')
@@ -864,7 +866,7 @@ class DnsZoner{
 
         }
         else {
-            return this.listRecords(domain,type,value,fullText)
+            return this.listRecords(domain,type,value,fullText,reg)
                 .then(r => Promise.allSettled(r.map(v=>this.#cfApi(v.a,
                     `zones/${v.z}/dns_records/${v.i}`,'DELETE')
                     .then(r=>r.json()).catch(()=>null))))
@@ -943,15 +945,11 @@ class Le{
     static getCacheOrders(kid){return `le_${Le.#DEBUG_MODE?"d":"r"}-${kid.substring(kid.lastIndexOf('/')+1)}`;}
     static getCacheKey(pin){return `le_${Le.#DEBUG_MODE?"d":"r"}-${Asn1.b64.c2u(pin)}`;}
     static getCacheDir(){return `le_${Le.#DEBUG_MODE?"d":"r"}-dir`;}
-    static #nonceStorage = JSON.parse(sessionStorage.getItem('nonce')??'[]');
+    static #nonceStorage = [];
     static async #getNonce(){
-        try {
-            return this.#nonceStorage.shift() ??
-                await this.#req(this.links['newNonce'])
-                    .then(() => this.#nonceStorage.shift());
-        }finally {
-            sessionStorage.setItem('nonce',JSON.stringify(this.#nonceStorage));
-        }
+        return this.#nonceStorage.shift() ??
+            await this.#req(this.links['newNonce'])
+                .then(() => this.#nonceStorage.shift());
     }
     static #putNonce(nonce){
         if(!nonce)return;
@@ -1163,7 +1161,14 @@ class Le{
         let profHash = await Asn1.hash.sha1(key.pin+prof.join(','),true).then(Asn1.b64.eau);
         let orders = JSON.parse(sessionStorage.getItem(Le.getCacheOrders(this.#userKey.le.kid))??null)??{};
         let order = orders[profHash]??null;
-        if(order===null||((order.status!=='ready')&&(order.status!=='pending'))){
+        if(order!==null&&(order.status==='pending')){
+            order = await this.#req(order.location).then(o => {
+                o[0].location = o[1].headers.get('location');
+                return o[0];
+            }).catch(()=>null);
+            orders[profHash] = order;
+        }
+        if(order===null||order.status==='invalid'||((order.status!=='ready')&&(order.status!=='pending'))){
             order = await this.#req(
                 this.links['newOrder'],
                 {
@@ -1183,11 +1188,10 @@ class Le{
         if(order['status']==='pending') {
             let validation = await Promise.allSettled(
                 order['authorizations']
-                    ?.map((l, i) => delay(Math.floor(Math.random()*5000+500)).then(()=>this.#req(l))
+                    ?.map((l, i) => delay(500+i*200).then(()=>this.#req(l))
                         .then(async r => {
                             r = r[0];
                             r.index = i
-                            await cb(i, ['text', 'init'], ['obj', r]);
                             return r;
                         })
                         .catch((e) => {
@@ -1195,7 +1199,10 @@ class Le{
                         })
                         .then(async r => {
                             if (r.status) {
-                                await cb(r.index, ['status', r.status], ['obj', {auth: r}])
+                                if(r.status !== 'valid') {
+                                    await cb(i, ['text', 'init'], ['obj', r]);
+                                    await cb(r.index, ['status', r.status], ['obj', {auth: r}])
+                                }
                                 let dns01 = r['challenges'].find(v => v.type === 'dns-01');
                                 if (dns01.status === 'pending') {
                                     await cb(r.index, ['text', 'prepare authKey'], ['obj', {dns01}])
@@ -1238,6 +1245,13 @@ class Le{
                         })
                     ) ?? []
             );
+            await cb(-1, ['text', 'remove authKey dns records'])
+            await Promise.allSettled(order['identifiers']?.map((r,i)=>{
+                delay(500+i*200).then(async () => {
+                    try{await cb(i, ['text', 'remove authKey dns record']);}catch(ignore){}
+                    await userStore.data.dns.removeRecords('_acme-challenge.' + r.value, 'TXT');
+                })
+            }));
             await cb(-1, ['text', 'check auths'],['obj',validation]);
             if([...validation].find(v=>v.value!=='valid')!==undefined){
                 await cb(-1,['text', 'bad auths'],['obj',validation]);

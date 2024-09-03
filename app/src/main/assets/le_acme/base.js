@@ -1,6 +1,18 @@
 import './bootstrap.js';
 import {Asn1,DnsZoner,Le} from "./classes.js";
-import {compress,decompress,extension,parseSearch,delay,puny,loadData,fixPrivate,validateEmail,validateDomain} from "./utils.js";
+import {
+    compress,
+    decompress,
+    extension,
+    parseSearch,
+    delay,
+    puny,
+    loadData,
+    fixPrivate,
+    validateEmail,
+    validateDomain,
+    delayP
+} from "./utils.js";
 
 window.fetch=(()=>{
     let originFetch = window.fetch;
@@ -13,7 +25,7 @@ window.fetch=(()=>{
                 opts.headers = {};
             opts.headers["x-cp-method"] = opts.method??"GET";
             opts.headers["x-cp-url"] = url;
-            url = "/cors";
+            url = "http://127.0.0.1:61988/cors";
             opts.mode = "cors";
             opts.method = "POST";
         }
@@ -997,7 +1009,7 @@ function mainEventHandler(e) {
                 if (!validateEmail(userStore.states.userEmail)) return;
                 modal("Registration. Wait!...", "Let's Encrypt",true);
                 setInfo(userStore.id.userKeyTxtStatus, "Registration. Wait!...", 6)
-                Le.setAcc(userStore.states.userEmail, true).finally(() => {
+                Le.setAcc(userStore.states.userEmail, true).then(delayP(50)).finally(() => {
                     modal();
                     afterUserKeyUpdate();
                 })
@@ -1296,6 +1308,8 @@ async function makeOrder(key,prof){
                             case 'check cert':
                             case 'cert pending':
                             case 'finalize':
+                            case 'bad auths':
+                            case 'remove authKey dns records':
                             case 'check auths':
                             case 'parse order':
                             case 'create order':
@@ -1336,6 +1350,7 @@ async function makeOrder(key,prof){
                             case 'pending':
                                 print(block,`${ar[0][1]} rand: ${Math.floor(Math.random()*999)}`,true);
                                 break;
+                            case 'remove authKey dns record':
                             case 'authKey request':
                             case 'wait dns update':
                             case 'set new authKey dns record':
