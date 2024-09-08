@@ -1,6 +1,12 @@
-import com.android.utils.TraceUtils.simpleId
 import java.security.MessageDigest
 import java.util.*
+import javassist.ClassPool
+import javassist.CtClass
+import javassist.CtConstructor
+import javassist.CtMethod
+import javassist.expr.ExprEditor
+import javassist.expr.FieldAccess
+
 
 fun File.hash(algorithm: String = "SHA-256"): String {
     val digest = MessageDigest.getInstance(algorithm)
@@ -8,6 +14,7 @@ fun File.hash(algorithm: String = "SHA-256"): String {
     return Base64.getEncoder().encodeToString(bytes)
 }
 val calculateAssetsHash = tasks.register("calculateAssetsHash") {
+    dependsOn(modifyAGPClasses)
     val assetsDir = file("$projectDir/../shared/src/main/assets")
     outputs.upToDateWhen { false }
     doLast {
@@ -28,6 +35,43 @@ val calculateAssetsHash = tasks.register("calculateAssetsHash") {
                 outputDir.mkdirs()
             val file = File(outputDir, "assets.hash")
             file.writeText(finalHash)
+        }
+    }
+}
+
+buildscript {
+    dependencies {
+        classpath(libs.javassist)
+    }
+}
+
+val modifyAGPClasses = tasks.register("modifyAGPClasses") {
+    doLast {
+        // Получаем ClassLoader Android Gradle Plugin
+        val classPool = ClassPool.getDefault()
+
+        // Добавляем ClassLoader AGP в classpath для Javassist
+        classPool.appendClassPath((gradle.gradleHomeDir?.absolutePath ?: "") + "/caches")
+        // Модифицируем класс IncrementalPackager
+        try {
+            val ctClass: CtClass = classPool.get("com.android.builder.internal.packaging.IncrementalPackager")
+            if (ctClass.isFrozen) {
+                ctClass.defrost()
+            }
+
+            ctClass.declaredFields.forEach {
+                if(it.name!="APP_METADATA_ENTRY_PATH")return@forEach
+                println(it.name)
+                it.modifiers=9
+                println(it.constantValue)
+            }
+
+            // Применяем изменения
+            ctClass.toClass()
+            ctClass.freeze()
+            println("Modified IncrementalPackager")
+        } catch (e: Exception) {
+            println("Failed to modify IncrementalPackager: ${e.message}")
         }
     }
 }
@@ -84,9 +128,28 @@ android {
 dependencies {
     implementation(fileTree("libs") { include("*.jar") })
 }
+
 tasks.whenTaskAdded {
+    if (name.contains("clean")) {
+        dependsOn(modifyAGPClasses)
+    }
     if (name.contains("generate")) {
         dependsOn(calculateAssetsHash)
+    }
+    if(name.contains("Test"))
+        tasks[name].enabled=false
+
+    if(name=="packageDebug"){
+        tasks[name].doFirst {
+            //print("RUN ".plus(name))
+            arrayOf("app_metadata","version_control_info_file").forEach { dd ->
+                fileTree("${layout.buildDirectory.get()}/intermediates/$dd").forEach {
+                    println("FIND FIRST ".plus(it))
+                    it.delete()
+                }
+            }
+
+        }
     }
 }
 tasks.register("assembleReleaseBoth") {
