@@ -1,11 +1,7 @@
-import java.security.MessageDigest
-import java.util.*
 import javassist.ClassPool
 import javassist.CtClass
-import javassist.CtConstructor
-import javassist.CtMethod
-import javassist.expr.ExprEditor
-import javassist.expr.FieldAccess
+import java.security.MessageDigest
+import java.util.Base64
 
 
 fun File.hash(algorithm: String = "SHA-256"): String {
@@ -14,7 +10,7 @@ fun File.hash(algorithm: String = "SHA-256"): String {
     return Base64.getEncoder().encodeToString(bytes)
 }
 val calculateAssetsHash = tasks.register("calculateAssetsHash") {
-    dependsOn(modifyAGPClasses)
+    //dependsOn(modifyAGPClasses)
     val assetsDir = file("$projectDir/../shared/src/main/assets")
     outputs.upToDateWhen { false }
     doLast {
@@ -82,12 +78,12 @@ plugins {
 
 android {
     namespace = "mja.cors_proxy"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "mja.cors_proxy"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
@@ -130,27 +126,27 @@ dependencies {
 }
 
 tasks.whenTaskAdded {
-    if (name.contains("clean")) {
-        dependsOn(modifyAGPClasses)
-    }
+//    if (name.contains("clean")) {
+//        dependsOn(modifyAGPClasses)
+//    }
     if (name.contains("generate")) {
         dependsOn(calculateAssetsHash)
     }
     if(name.contains("Test"))
         tasks[name].enabled=false
 
-    if(name=="packageDebug"){
-        tasks[name].doFirst {
-            //print("RUN ".plus(name))
-            arrayOf("app_metadata","version_control_info_file").forEach { dd ->
-                fileTree("${layout.buildDirectory.get()}/intermediates/$dd").forEach {
-                    println("FIND FIRST ".plus(it))
-                    it.delete()
-                }
-            }
-
-        }
-    }
+//    if(name=="packageDebug"){
+//        tasks[name].doFirst {
+//            //print("RUN ".plus(name))
+//            arrayOf("app_metadata","version_control_info_file").forEach { dd ->
+//                fileTree("${layout.buildDirectory.get()}/intermediates/$dd").forEach {
+//                    println("FIND FIRST ".plus(it))
+//                    //it.delete()
+//                }
+//            }
+//
+//        }
+//    }
 }
 tasks.register("assembleReleaseBoth") {
     dependsOn("build","assembleRelease", "bundleRelease")

@@ -11,7 +11,9 @@ import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.widget.Toast;
 
 public class ServerApk extends Service {
@@ -77,17 +79,19 @@ public class ServerApk extends Service {
             return START_NOT_STICKY;
         }
         if(CMD_OPEN_LINK.equals(intent.getAction())){
-            openMainPage();
+            openMainPage(0);
             return START_NOT_STICKY;
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void openMainPage(){
-        startActivity(new Intent(Intent.ACTION_VIEW).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .setData(Uri.parse("http://127.0.0.1:61988/")));
+    private void openMainPage(int delay){
+        new Handler(Looper.getMainLooper()).postDelayed(() -> startActivity(new Intent(Intent.ACTION_VIEW).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setData(Uri.parse("http://127.0.0.1:61988/"))), delay);
     }
-
+    private void openMainPage(){
+        openMainPage(2000);
+    }
     private Notification getNotification(){
         Notification.Builder notificationBuilder = new Notification.Builder(this,"11");
         NotificationManager notificationManager =
