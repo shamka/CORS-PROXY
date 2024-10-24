@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Cors Proxy</string>
+    <string name="is_running">The CORS proxy server is run</string>
+    <string name="version">v%s</string>
+    <string name="notification_please">Please, allow notifications</string>
+    <string name="starting">Service starting…</string>
+    <string name="stopping">Service stopping…</string>
+</resources>

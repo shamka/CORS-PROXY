@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cors Proxy Usage Instructions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<h1>Cors Proxy Usage Instructions</h1>
+<p>To use the application, follow these instructions:</p>
+<ul>
+    <li><strong>Request method:</strong> Use <code>POST</code> to this address.</li>
+    <li><strong>Header:</strong> <code>X-Cp-Uri</code> specifies the target URL for the request.</li>
+    <li><strong>Header:</strong> <code>X-Cp-Method</code> defines the desired request method (e.g., <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>CUSTOM</code>).</li>
+</ul>
+<h2>Example Code</h2>
+<p>Here is an example of how to replace standard <code>window.fetch</code> and use it:</p>
+<pre><code>
+window.fetch=(()=>{
+    let originFetch = window.fetch;
+    let newFetch = function (url, opts = {}) {
+        if(newFetch.disablenet)throw new Error("Net is disabled");
+        const controller = new AbortController();
+        opts.signal = controller.signal;
+        if(opts.mode === "cors"){
+            if(opts.headers === undefined)
+                opts.headers = {};
+            opts.headers["x-cp-method"] = opts.method??"GET";
+            opts.headers["x-cp-url"] = url;
+            url = "http://127.0.0.1:61988/cors";
+            opts.mode = "cors";
+            opts.method = "POST";
+        }
+        let store = opts.store;
+        delete opts.store;
+        let timerHandler = setTimeout(() => {
+            controller.abort();
+        }, opts.timeout ?? 10000);
+        return originFetch(url, opts)
+            .then(r=>{
+                clearTimeout(timerHandler);
+                r.store=store;
+                if(!r.ok){
+                    if(r.status === 445)throw new Error(r.headers.get('x-cp-reason')??"status error: 445");
+                }
+                return r;
+            },e=>{
+                clearTimeout(timerHandler);
+                e.store=store;
+                throw e;
+            })
+    };
+    newFetch.disablenet = (parseSearch().disablenet?.[0] !== undefined);
+    newFetch.originalFetch = originFetch.originalFetch??[];
+    newFetch.originalFetch.push(originFetch.bind(window));
+    return newFetch;
+})();
+
+
+fetch("https://example.com/",{mode:"cors"}).then(r=>r.text()).then(console.log);
+    </code></pre>
+</body>
+</html>

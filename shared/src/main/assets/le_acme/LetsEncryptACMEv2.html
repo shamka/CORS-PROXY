@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <link href="base.css" rel="stylesheet" type="text/css" />
+    <meta charset="UTF-8">
+    <title>LeAcmeV2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <script type="module" src="base.js"></script>
+</head>
+<body>
+    <div class="container mainWin">
+        <div class="border border-info m-2 p-2">
+            <div class="form-group">
+                <label class="mb-2 btn btn-info" id="btnConfigReset" data-cb="click">RESET</label>
+                <label for="btnConfigLoad" class="mb-2 btn btn-info">LOAD</label>
+                <input hidden="hidden" type="file" id="btnConfigLoad" accept=".spem,.sder" data-label="1" data-cb="change"/>
+                <label class="mb-2 btn btn-info" id="btnConfigSaveAsPem" data-cb="click">SAVE as pem</label>
+                <label class="mb-2 btn btn-info" id="btnConfigSaveAsDer" data-cb="click">SAVE as der</label>
+                <span data-cb='' class="mb-2 loading text-warning-emphasis bg-warning-subtle border border-warning-subtle" data-style="warning">Wait, the document is still loading...</span><br/>
+            </div>
+        </div>
+    </div>
+    <div class="container mainWin">
+        <div class="border border-info m-2 p-2">
+            <div class="form-group">
+                <label class="mb-2 btn btn-info" id="btnUserKeySet" data-cb="click">User Key</label>
+                <span class="mb-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle" data-style="warning" id="txtUserKeyHeader"></span>
+            </div>
+            <div class="form-group">
+                <label class="mb-2 btn btn-info" id="btnDnsSet" data-cb="click">Dns Zones</label>
+                <span data-cb='' class="mb-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtDnsHeader"></span>
+            </div>
+            <div class="form-group">
+                <label class="mb-2 btn btn-info" id="btnPrivatesSet" data-cb="click">Private Keys</label>
+                <span data-cb='' class="mb-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtPrivatesHeader"></span>
+            </div>
+            <div class="form-group">
+                <label class="mb-2 btn btn-info" id="btnProfileSet" data-cb="click">Profiles</label>
+                <span data-cb='' class="mb-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtProfileHeader"></span>
+            </div>
+        </div>
+    </div>
+    <div class="container mainWin">
+        <div class="border border-info m-2 p-2">
+            <div class="form-group">
+                <label class="btn btn-info" data-cb="click" id="orderCreate">Create order</label>
+            </div>
+            <div class="form-group" id="mainWorker">
+            </div>
+        </div>
+    </div>
+    <!-- Modals -->
+    <div class="modal fade" data-modal="1" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" data-cb="click" data-action="closeModal">User Key</h5></div>
+                <div class="modal-body container">
+                    <div>
+                        <div class="form-group">
+                            <label class="mb-2 btn btn-info disabled" id="btnUserKeyGenerate" data-cb="click">Generate Key Pair</label>
+                            <label class="mb-2 btn btn-info disabled" for="btnUserKeyLoad">LOAD</label>
+                            <input hidden="hidden" id="btnUserKeyLoad" type="file" accept=".key,.openssl,.privkey,.p8" data-label="1" data-cb="change"/>
+                            <label class="mb-2 btn btn-info" id="btnUserKeyReset" data-cb="click">RESET</label>
+                            <span class="mb-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtUserKeyInfo"></span><br/>
+                            <label class="mb-2 btn btn-info disabled" id="btnUserKeyRegistration" data-cb="click">Registration</label>
+                            <label class="mb-2 btn btn-info disabled" id="btnUserKeySetEmail" data-cb="click">Set Email</label>
+                            <label class="mb-2 btn btn-info disabled" id="btnUserKeyShow" data-cb="click">Show Data</label>
+                        </div>
+                        <div class="form-group m-1 p-1">
+                            <table>
+                                <tr>
+                                    <td>Cache:</td>
+                                    <td><span class="btn text-success-emphasis bg-success-subtle border border-warning-subtle visually-hidden" data-cb="click" data-style="warning" id="btnUserKeyCache" ></span></td>
+                                </tr>
+                                <tr>
+                                    <td>KeyPin:</td>
+                                    <td><span class="text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtUserKeyPin"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>KeyType:</td>
+                                    <td><span class="text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtUserKeyType"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Status:</td>
+                                    <td><span class="text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-cb="click" data-style="warning" id="txtUserKeyStatus"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Email:</td>
+                                    <td><span class="text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtUserKeyEmail"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Kid:</td>
+                                    <td><span class="text-warning-emphasis bg-warning-subtle border border-warning-subtle visually-hidden" data-style="warning" id="txtUserKeyKid"></span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" data-modal="2" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" data-cb="click" data-action="closeModal">Dns Zones</h5></div>
+                <div class="modal-body container">
+                    <div class="row">
+                        <div class="input-group col">
+                            <label for="inputDnsKey" class="input-group-text">ApiKey</label>
+                            <input type="text" class="form-control" data-cb="keydown" data-stype='submit' data-btn='btnDnsAdd' id="inputDnsKey" placeholder="API key for DnsZones administrator">
+                            <label class="btn btn-info" data-cb="click" id="btnDnsAdd">Add</label>
+                        </div>
+                    </div>
+                    <div id="listDnsGroup" class="list-group" data-cb="click">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" data-modal="3" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" data-cb="click" data-action="closeModal">Privates keys</h5></div>
+                <div class="modal-body container">
+                    <div class="row">
+                        <div class="form-group">
+                            <label class="mb-2 btn btn-info" for="btnPrivatesAdd">Add key</label>
+                            <input hidden="hidden" id="btnPrivatesAdd" type="file" multiple="multiple" accept=".key,.openssl,.privkey,.p8,.pem" data-label="3" data-cb="change"/>
+                            <label class="mb-2 btn btn-info disabled" id="btnPrivateGenerate" data-cb="click">Generate new</label>
+<!--                            <span>or insert (ctrl+v) key from clipboard</span>-->
+                        </div>
+                    </div>
+                    <div id="listPrivatesGroup" class="list-group" data-cb="click">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" data-modal="4" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" data-cb="click" data-action="closeModal">Profiles</h5></div>
+                <div class="modal-body container">
+                    <div class="row">
+                        <div class="form-group">
+                             <label class="mb-2 btn btn-info" id="btnProfileCreate" data-cb="click">Create</label>
+                        </div>
+                    </div>
+                    <div id="listProfileGroup" class="list-group" data-cb="click">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" data-modal="main" tabindex="-1" aria-hidden="true" >
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="border border-info border-5 modal-content">
+                    <div class="modal-header" data-cb="click" data-action="closeModal"><h5 class="modal-title">Modal title</h5></div>
+                    <div class="m-2 p-2 modal-body form-group" data-cb="click"></div>
+                </div>
+            </div>
+        </div>
+    <div class="container orderWin d-none">
+        <div class="border border-info m-2 p-2 list-group">;
+
+        </div>
+    </div>
+</body>
+</html>
