@@ -1,9 +1,9 @@
 [versions]
 agp = "8.6.1"
-server = "2.0.0"
-apk = "2.0"
-code = "6"
-jar = "2.0"
+server = "2.5.0"
+apk = "2.5"
+code = "8"
+jar = "2.5"
 
 [libraries]
 

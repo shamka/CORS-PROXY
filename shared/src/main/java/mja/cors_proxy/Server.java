@@ -40,8 +40,8 @@ public class Server {
 
     }
 
-    public static final String VERSION = "2.0.0";
-    public static final String LE_ACME_VERSION = "2.0";
+    public static final String VERSION = "2.5.0";
+    public static final String LE_ACME_VERSION = "2.5";
     public static final String RES_HASH = getAppResourceAsString("assets.hash");
     public static final int LOCAL_PORT = 61988;
     private static final Set<String> ignoreExposeHeaders = Set.of(
@@ -303,11 +303,14 @@ public class Server {
                 Headers gds = exchange.getResponseHeaders();
                 gds.set("Location", "LetsEncryptACMEv2.html" + query);
                 exchange.sendResponseHeaders(302, 0);
+                return;
             }
             path = path.substring(1);
             if(path.endsWith(".js"))getRes(exchange, path, "text/javascript; charset=utf-8");
             else if(path.endsWith(".css"))getRes(exchange, path, "text/css; charset=utf-8");
             else if(path.endsWith(".html"))getRes(exchange, path, "text/html; charset=utf-8");
+            else if(path.endsWith(".png"))getRes(exchange, path, "image/png");
+            else getRes(exchange, path, "application/octet-stream");
         } else throw new HttpError(403);
     }
     private static void getRes(HttpExchange exchange, String file, String type) throws IOException{

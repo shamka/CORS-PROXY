@@ -1203,19 +1203,12 @@ class Le{
                 pair.domain = '_acme-challenge.' + authZ.identifier.value;
                 pair.domain_ = authZ.identifier.value;
                 pair.value = dns01.print;
-                pair.prom=(userStore.data.dns.addRecord(pair.domain, 'TXT', pair.value));
+                await userStore.data.dns.addRecord(pair.domain, 'TXT', pair.value);
                 pair.url=(dns01.url);
                 pair.authKey=(authKey);
                 cleanerArray.push(pair);
             }
             //wait cloudflare
-            await cb(['text', `wait dns sets`]);
-            let validation = await Promise.allSettled(cleanerArray.map(r=>r.prom));
-            if(validation.find(v=>v.status!=="fulfilled")){
-                await cb(['text', `error cleanup`]);
-                cleanerArray.forEach(v=>userStore.data.dns.removeRecords(v.domain, 'TXT', v.value));
-                return false;
-            }
             for(let time=30;time>=0;time--){
                 await cb(['toast', `wait dns zone updates ${time} seconds`]);
                 await delay(1000);
@@ -1229,16 +1222,17 @@ class Le{
                 let proms = [0,0,0];
                 for(let i=proms.length-1;i>=0;i--) {
                     proms[i] = new Promise(async (resolve) => {
-                        let i = query.pop();
-                        if(i!==undefined) {
+                        while(true) {
+                            let i = query.pop();
+                            if (i === undefined) break;
                             let st = await this.#req(cleanerArray[i].url, {
                                 keyAuthorization: cleanerArray[i].authKey
                             })
                                 .then(r => r[0]);
-                            await delay(1000);
+                            await delay(500);
                             while (true) {
                                 if (st.status === 'pending') {
-                                    await delay(5000);
+                                    await delay(2500);
                                     st = await this.#req(cleanerArray[i].url)
                                         .then(r => r[0]);
                                 } else break;
@@ -1247,7 +1241,7 @@ class Le{
                             cleanerArray[i].status = st.status;
                             vvv++;
                             await cb(['toast', `valid is ${vvv}/${cleanerArray.length}`]);
-                            await delay(1000);
+                            await delay(500);
                         }
                         resolve();
                     });
@@ -1262,7 +1256,7 @@ class Le{
         }
         if(order['status']==='ready') {
             await cb( ['text', 'finalize'], ['url', order['finalize']]);
-            await delay(5000);
+            await delay(2500);
             let retry;
             while(true) {
                 let fin = await this.#req(order['finalize'], {csr: csr});

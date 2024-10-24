@@ -6,7 +6,7 @@ plugins {
     application
 }
 group = "mja.cors_proxy"
-version = "2.0.0"
+version = "2.5.0"
 fun File.hash(algorithm: String = "SHA-256"): String {
     val digest = MessageDigest.getInstance(algorithm)
     val bytes = digest.digest(this.readBytes())
@@ -49,7 +49,7 @@ sourceSets.getByName("main") {
 }
 
 tasks.register<Jar>("customJar") {
-    archiveFileName.set("cors_proxy.jar")
+    archiveFileName.set("app-release.jar")
     from(sourceSets.main.get().output)
     dependsOn(configurations.runtimeClasspath)
 
