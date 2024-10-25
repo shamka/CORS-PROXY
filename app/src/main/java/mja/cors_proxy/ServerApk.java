@@ -90,7 +90,7 @@ public class ServerApk extends Service {
                 .setData(Uri.parse("http://127.0.0.1:61988/"))), delay);
     }
     private void openMainPage(){
-        openMainPage(2000);
+        openMainPage(1000);
     }
     private Notification getNotification(){
         Notification.Builder notificationBuilder = new Notification.Builder(this,"11");

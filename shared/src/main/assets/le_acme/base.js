@@ -893,7 +893,11 @@ function mainEventHandler(e) {
                 if(!pin)
                     pin = e.target.closest(`div[data-action="showData"]`)?.querySelector('.pin')?.innerText;
                 if(pin)
-                    modal('<pre data-action="copy">' + (await Asn1.encType(userStore.states.privates[pin]??[],"B64", "PRIVATE KEY")) + '</pre>', pin);
+                    modal('<pre data-action="copy">' + (await Asn1.encType(
+                        (userStore.states.privates[pin] instanceof Array)?
+                        userStore.states.privates[pin][1]:
+                            userStore.states.privates[pin]??[]
+                        ,"B64", "PRIVATE KEY")) + '</pre>', pin);
             })();return;
             case 'closeModal':
                 userStore.id.modals[e.target.closest(".modal.fade").dataset.modal].hide();
