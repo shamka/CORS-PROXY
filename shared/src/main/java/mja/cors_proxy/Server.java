@@ -148,6 +148,9 @@ public class Server {
                     else if ("/favicon.ico".equals(path)) {
                         getRes(exchange, "icon.png", "image/png");
                     }
+                    else if ("/leacme.instruction.html".equals(path)) {
+                        getRes(exchange, "leacme.instruction.html", "text/html;charset=utf-8");
+                    }
                     else if ("/".equals(path)) {
                         getRes(exchange, "mainPage.html", "text/html;charset=utf-8");
                     }
