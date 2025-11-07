@@ -5,4 +5,5 @@
     <string name="notification_please">Please, allow notifications</string>
     <string name="starting">Service starting…</string>
     <string name="stopping">Service stopping…</string>
+    <string name="listen">Listen on 61988 port</string>
 </resources>

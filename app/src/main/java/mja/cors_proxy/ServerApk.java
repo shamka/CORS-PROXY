@@ -52,7 +52,8 @@ public class ServerApk extends Service {
 
             isRunning = true;
             app.setRun(true);
-            Toast.makeText(this,R.string.starting, Toast.LENGTH_SHORT).show();
+            // Toast.makeText(this,R.string.starting, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,R.string.listen, Toast.LENGTH_SHORT).show();
             idRunning = startId;
 
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
@@ -79,18 +80,18 @@ public class ServerApk extends Service {
             return START_NOT_STICKY;
         }
         if(CMD_OPEN_LINK.equals(intent.getAction())){
-            openMainPage(0);
+            // openMainPage(0);
             return START_NOT_STICKY;
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void openMainPage(int delay){
-        new Handler(Looper.getMainLooper()).postDelayed(() -> startActivity(new Intent(Intent.ACTION_VIEW).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .setData(Uri.parse("http://127.0.0.1:61988/"))), delay);
-    }
+    // private void openMainPage(int delay){
+        // new Handler(Looper.getMainLooper()).postDelayed(() -> startActivity(new Intent(Intent.ACTION_VIEW).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                // .setData(Uri.parse("http://127.0.0.1:61988/"))), delay);
+    // }
     private void openMainPage(){
-        openMainPage(1000);
+        // openMainPage(1000);
     }
     private Notification getNotification(){
         Notification.Builder notificationBuilder = new Notification.Builder(this,"11");

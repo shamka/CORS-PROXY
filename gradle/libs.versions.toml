@@ -2,7 +2,7 @@
 agp = "8.6.1"
 server = "2.5.1"
 apk = "2.5.1"
-code = "9"
+code = "10"
 jar = "2.5.1"
 
 [libraries]
