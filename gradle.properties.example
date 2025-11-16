@@ -1,0 +1,13 @@
+# Example gradle.properties for CORS-PROXY
+# Copy this file to ~/.gradle/gradle.properties (your home directory, NOT project directory)
+# Then fill in your actual values
+
+# Android signing configuration
+# IMPORTANT: Use strong passwords!
+signing.key.alias=mja.cors_proxy
+signing.key.password=CHANGE_THIS_TO_STRONG_PASSWORD
+signing.keystore.file=/path/to/your/keystore.jks
+signing.keystore.password=CHANGE_THIS_TO_STRONG_PASSWORD
+
+# Example of generating a strong password:
+# openssl rand -base64 32

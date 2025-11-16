@@ -54,12 +54,14 @@ android {
         versionName = libs.versions.apk.get()
     }
 
+    // SECURITY FIX: Removed hardcoded credentials
+    // Use environment variables or gradle.properties (not committed to git)
     signingConfigs {
         create("release") {
-            keyAlias = "mja.cors_proxy"
-            keyPassword = "7"
-            storeFile = file("C:/Android/keys.jks")
-            storePassword = "7"
+            keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: project.findProperty("signing.key.alias") as String?
+            keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: project.findProperty("signing.key.password") as String?
+            storeFile = file(System.getenv("SIGNING_KEYSTORE_FILE") ?: project.findProperty("signing.keystore.file") as String? ?: "release.keystore")
+            storePassword = System.getenv("SIGNING_KEYSTORE_PASSWORD") ?: project.findProperty("signing.keystore.password") as String?
         }
     }
     sourceSets.getByName("main") {
