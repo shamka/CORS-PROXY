@@ -9,7 +9,9 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.SecureRandom;
@@ -177,6 +179,27 @@ public class Server {
         singleTonServer = server;
         singleTonServerPrep = false;
     }
+    private static boolean isCloudMetadataAddress(InetAddress addr) {
+        byte[] b = addr.getAddress();
+        return b.length == 4 && b[0] == (byte) 169 && b[1] == (byte) 254;
+    }
+    private static boolean isUniqueLocalAddress(InetAddress addr) {
+        byte[] b = addr.getAddress();
+        return b.length == 16 && (b[0] == (byte) 0xfc || b[0] == (byte) 0xfd);
+    }
+    private static void checkPublicUrl(URL url) throws IOException {
+        String scheme = url.getProtocol();
+        if (!"http".equals(scheme) && !"https".equals(scheme)) throw new HttpError(403);
+        String host = url.getHost();
+        if (host == null || host.isEmpty()) throw new HttpError(400);
+        for (InetAddress addr : InetAddress.getAllByName(host)) {
+            if (addr.isLoopbackAddress() || addr.isSiteLocalAddress() || addr.isLinkLocalAddress()
+                    || addr.isMulticastAddress() || isCloudMetadataAddress(addr)
+                    || isUniqueLocalAddress(addr)) {
+                throw new HttpError(403);
+            }
+        }
+    }
     private static void parseCors(HttpExchange exchange) throws IOException {
         if ("OPTIONS".equals(exchange.getRequestMethod())) {
             Headers gds = exchange.getResponseHeaders();
@@ -210,59 +233,87 @@ public class Server {
         if(method == null || hUrl == null){
             throw new HttpError(400);
         }
-        URL url = URI.create(hUrl).toURL();
+        URL url;
+        try {
+            url = URI.create(hUrl).toURL();
+        } catch (IllegalArgumentException e) {
+            throw new HttpError(400);
+        }
+        checkPublicUrl(url);
 
         InputStream cl2pr = exchange.getRequestBody();
         OutputStream pr2cl = exchange.getResponseBody();
 
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        try {
-            conn.setRequestMethod(method);
-        } catch (Throwable e) {
+        HttpURLConnection conn = null;
+        int stCode = 0;
+        boolean firstHop = true;
+        for (int hop = 0; hop <= 5; hop++) {
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setInstanceFollowRedirects(false);
             try {
-                Field mt = HttpURLConnection.class.getDeclaredField("method");
-                Field del = conn.getClass().getDeclaredField("delegate");
-                mt.setAccessible(true);
-                del.setAccessible(true);
-                mt.set(del.get(conn), method);
-            } catch (Exception ignore) {
-                throw new HttpError(405);
+                conn.setRequestMethod(method);
+            } catch (Throwable e) {
+                try {
+                    Field mt = HttpURLConnection.class.getDeclaredField("method");
+                    Field del = conn.getClass().getDeclaredField("delegate");
+                    mt.setAccessible(true);
+                    del.setAccessible(true);
+                    mt.set(del.get(conn), method);
+                } catch (Exception ignore) {
+                    throw new HttpError(405);
+                }
             }
-        }
-        outer:
-        for (Map.Entry<String, List<String>> pv : headers.entrySet()) {
-            if (pv.getKey() == null) continue;
-            if (pv.getValue() == null) continue;
-            String key = pv.getKey().toLowerCase();
-            if(ignoreRequestHeaders.contains(key))continue;
-            for(String v : ignoreRequestHeadersPrefix)
-                if(key.startsWith(v))continue outer;
+            outer:
+            for (Map.Entry<String, List<String>> pv : headers.entrySet()) {
+                if (pv.getKey() == null) continue;
+                if (pv.getValue() == null) continue;
+                String key = pv.getKey().toLowerCase();
+                if(ignoreRequestHeaders.contains(key))continue;
+                for(String v : ignoreRequestHeadersPrefix)
+                    if(key.startsWith(v))continue outer;
 
-            for (String v : pv.getValue()) {
-                conn.addRequestProperty(pv.getKey(), v);
+                for (String v : pv.getValue()) {
+                    conn.addRequestProperty(pv.getKey(), v);
+                }
             }
-        }
-        conn.setConnectTimeout(10000);
-        conn.setDoInput(true);
-        //REQUEST
-        if (cl2pr.available() > 0) {
-            conn.setDoOutput(true);
-            OutputStream pr2sr = conn.getOutputStream();
-            copyStream(cl2pr, pr2sr);
-            cl2pr.close();
+            conn.setConnectTimeout(10000);
+            conn.setDoInput(true);
+            //REQUEST (body only on the first hop)
+            if (firstHop && cl2pr.available() > 0) {
+                conn.setDoOutput(true);
+                OutputStream pr2sr = conn.getOutputStream();
+                copyStream(cl2pr, pr2sr);
+                cl2pr.close();
+            }
+            try {
+                stCode = conn.getResponseCode();
+            } catch (Throwable e) {
+                stCode = 445;
+            }
+            if (stCode == 445) break;
+            if ((stCode == 301 || stCode == 302 || stCode == 303 || stCode == 307 || stCode == 308)
+                    && "GET".equals(method)) {
+                String location = conn.getHeaderField("Location");
+                if (location != null && hop < 5) {
+                    URL next;
+                    try {
+                        next = new URL(url, location);
+                    } catch (MalformedURLException e) {
+                        break;
+                    }
+                    conn.disconnect();
+                    checkPublicUrl(next);
+                    url = next;
+                    firstHop = false;
+                    continue;
+                }
+            }
+            break;
         }
         //RESPONSE
         List<String> expose = new ArrayList<>();
         expose.add("Access-Control-Expose-Headers");
         Headers gds = exchange.getResponseHeaders();
-        int stCode;
-        try {
-            stCode = conn.getResponseCode();
-        } catch (Throwable e) {
-            stCode = 445;
-            gds.add("x-cp-reason", e.toString());
-            expose.add("x-cp-reason");
-        }
         Map<String, List<String>> headers2 = conn.getHeaderFields();
 
         InputStream sr2pr;
