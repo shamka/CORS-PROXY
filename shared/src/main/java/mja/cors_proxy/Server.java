@@ -12,15 +12,9 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.Executors;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 public class Server {
 
@@ -109,27 +103,7 @@ public class Server {
     }
 
     /** @noinspection SameParameterValue*/
-    @SuppressLint("CustomX509TrustManager")
     private static void startServer(int port, final Runnable cb){
-
-        SSLContext context;
-        try {
-            context = SSLContext.getInstance("TLS");
-            context.init(null, new TrustManager[]{new X509TrustManager() {
-                @SuppressLint("TrustAllX509TrustManager")
-                @Override
-                public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-                @SuppressLint("TrustAllX509TrustManager")
-                @Override
-                public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-                @Override
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }
-            }}, new SecureRandom());
-        } catch (Exception e) {return;}
-
-        HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 
         HttpServer server = null;
         try {
